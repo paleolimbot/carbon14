@@ -32,7 +32,7 @@ for(item in transpose(files)) {
   class(df) <- c("age_calibration_curve", class(df))
   attr(df, "spec") <- NULL
   attr(df, "calibration") <- list(
-    cal_age = "age_bp",
+    cal_age = "cal_bp",
     measured_age = "age_14C",
     measured_age_error = "error"
   )
