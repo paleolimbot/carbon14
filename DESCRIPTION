@@ -1,0 +1,14 @@
+Package: carbon14
+Title: Tidy Radiocarbon Dating Tools
+Version: 0.0.0.9000
+Authors@R: person("Dewey", "Dunnington", email = "dewey@fishandwhistle.net", role = c("aut", "cre"))
+Description: Provides raw data and calibration functions for radiocarbon dates.
+Depends: R (>= 3.4.3)
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Imports: rlang,
+    tibble,
+    dplyr
+Suggests: testthat
+RoxygenNote: 6.0.1
