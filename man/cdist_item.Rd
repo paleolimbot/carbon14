@@ -4,7 +4,7 @@
 \alias{cdist_item}
 \title{Create custom probability distributions}
 \usage{
-cdist_item(..., dist = "norm", density_function = NULL,
+cdist_item(..., dist = NULL, density_function = NULL,
   quantile_function = NULL, dist_info = list())
 }
 \arguments{

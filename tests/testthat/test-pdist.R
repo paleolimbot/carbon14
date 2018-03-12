@@ -14,7 +14,7 @@ test_that("invalid args for cdist_item for parameterized distributions are caugh
 test_that("custom specified distributions work", {
   vals <- seq(-5, 5, 0.01)
   densities <- dnorm(vals, mean = 0, sd = 1)
-  cd <- custom_cdist_item(values = vals, densities = densities)
+  cd <- cdist_item_from_densities(values = vals, densities = densities)
   expect_true(abs(quantile(cd, 0.5)) <= 0.01)
   expect_true(
     all(
@@ -23,12 +23,24 @@ test_that("custom specified distributions work", {
         dplyr::near(0, tol = 1e-4)
     )
   )
+  expect_is(summary(cd), "tbl_df")
 })
 
-test_that("summary function returns a 1-row tibble of quantiles", {
+test_that("distribution math is close enough", {
+  truth <- cdist_item(mean = 0, sd = 1, dist = "norm")
+  approx <- cdist_item_from_densities(
+    values = seq(-5, 5, 0.01),
+    densities = dnorm(values, mean = 0, sd = 1)
+  )
+
+  expect_identical(range(truth), c(-Inf, Inf))
+  expect_identical(range(approx), c(-5, 5))
+  expect_true(dplyr::near(weighted.mean(truth), weighted.mean(approx), tol = 1e-4))
+})
+
+test_that("summary function returns a 1-row tibble", {
   cd <- cdist_item(mean = 10, sd = 1, dist = "norm")
   expect_is(summary(cd), "tbl_df")
-  expect_true(all(grepl("^quantile", colnames(summary(cd)))))
   expect_equal(nrow(summary(cd)), 1)
 })
 
@@ -65,7 +77,7 @@ test_that("translate pdist works with a calibration curve", {
   date <- cdist_item(mean = 340, sd = 30, dist = "norm")
   cal <- translate_distribution(x = intcal13$cal_bp, y = intcal13$age_14C, dist = date)
   bchron_cal <- Bchron::BchronCalibrate(340, 30, "intcal13")
-  bchron_dist <- custom_cdist_item(
+  bchron_dist <- cdist_item_from_densities(
     values = bchron_cal$Date1$ageGrid,
     densities = bchron_cal$Date1$densities
   )

@@ -2,12 +2,19 @@
 % Please edit documentation in R/pdist.R
 \name{summary.cdist_item}
 \alias{summary.cdist_item}
+\alias{as_tibble.cdist_item}
+\alias{as.data.frame.cdist_item}
 \alias{as.character.cdist_item}
 \alias{print.cdist_item}
 \alias{format.cdist_item}
 \title{Summarise, print, characterify distributions}
 \usage{
-\method{summary}{cdist_item}(object, ...)
+\method{summary}{cdist_item}(object, quantiles = c(0.05, 0.25, 0.5, 0.75,
+  0.95), ...)
+
+\method{as_tibble}{cdist_item}(x, ...)
+
+\method{as.data.frame}{cdist_item}(x, ...)
 
 \method{as.character}{cdist_item}(x, digits = 3, alpha = 0.05, ...)
 
@@ -17,6 +24,8 @@
 }
 \arguments{
 \item{object, x}{A \link{cdist_item} object.}
+
+\item{quantiles}{Quantiles to include in the summary object}
 
 \item{...}{Passed to parent methods}
 
