@@ -5,7 +5,7 @@
 \title{Create custom probability distributions}
 \usage{
 cdist(..., dist = "norm", density_function = NULL,
-  quantile_function = NULL)
+  quantile_function = NULL, dist_info = list())
 }
 \arguments{
 \item{...}{Parameters to pass to density and quantile functions}
@@ -15,6 +15,8 @@ cdist(..., dist = "norm", density_function = NULL,
 \item{density_function}{Function like \link[stats]{dnorm}. Overrides dist argument.}
 
 \item{quantile_function}{Function like \link[stats]{qnorm}. Overrides dist argument.}
+
+\item{dist_info}{Meta information about the distribution}
 }
 \description{
 Create custom probability distributions

@@ -5,16 +5,18 @@
 #' @param dist Suffix for distribution (e.g., "norm", "t", etc.)
 #' @param density_function Function like \link[stats]{dnorm}. Overrides dist argument.
 #' @param quantile_function Function like \link[stats]{qnorm}. Overrides dist argument.
+#' @param dist_info Meta information about the distribution
 #'
 #' @importFrom purrr %||%
 #' @export
 cdist <- function(..., dist = "norm", density_function = NULL,
-                       quantile_function = NULL) {
+                       quantile_function = NULL, dist_info = list()) {
   params <- tibble::lst(...)
   stats_ns <- getNamespace("stats")
   if(!is.null(dist)) {
     density_function_def <- stats_ns[[paste0("d", dist)]]
     quantile_function_def <- stats_ns[[paste0("q", dist)]]
+    dist_info <- c(dist_info, list(dist = dist), params)
   } else {
     density_function_def <- NULL
     quantile_function_def <- NULL
@@ -23,6 +25,7 @@ cdist <- function(..., dist = "norm", density_function = NULL,
   item <- new_cdist(list(
     density_function = density_function %||% density_function_def,
     quantile_function = quantile_function %||% quantile_function_def,
+    dist_info = dist_info,
     params = params
   ))
 
@@ -50,6 +53,55 @@ custom_cdist <- function(.data = NULL, values, densities) {
       stats::approx(cdf / max(cdf), values, xout = q)$y
     }
   )
+}
+
+
+#' Summarise, print, characterify distributions
+#'
+#' @param object,x A \link{cdist} object.
+#' @param digits The number of digits to display
+#' @param alpha The confidence level to which print when coercing to character
+#' @param ... Passed to parent methods
+#'
+#' @export
+#'
+summary.cdist <- function(object, ...) {
+  quantile_vals <- c(0.01, 0.05, 0.16, 0.5, 0.84, 0.95, 0.99)
+  quants <- purrr::set_names(
+    stats::quantile(object, quantile_vals),
+    paste0("quantile_", quantile_vals * 100)
+  )
+  tibble::as.tibble(as.list(quants))
+}
+
+#' @rdname summary.cdist
+#' @export
+as.character.cdist <- function(x, digits = 3, alpha = 0.05, ...) {
+  conf_level <- 1 - alpha
+  quants <- format(quantile(x, c(alpha, 0.5, conf_level)), digits = digits, ...)
+  sprintf("%s (%s%% CI: %s-%s)", quants[2], conf_level * 100, quants[1], quants[3])
+}
+
+#' @rdname summary.cdist
+#' @export
+print.cdist <- function(x, ...) {
+  info <- x$dist_info
+  if(length(info) > 0) {
+    desc <- paste(names(info), purrr::map_chr(info, format), sep = " = ", collapse = ", ")
+    desc <- paste0(" ", desc)
+  } else {
+    desc <- ""
+  }
+  chr <- format.cdist(x, ...)
+  cat(sprintf("<continuous distribution%s>\n", desc))
+  print(chr, quote = FALSE)
+  invisible(x)
+}
+
+#' @rdname summary.cdist
+#' @export
+format.cdist <- function(x, ...) {
+  as.character(x, ...)
 }
 
 new_cdist <- function(x) {

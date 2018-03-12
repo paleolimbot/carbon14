@@ -25,6 +25,24 @@ test_that("custom specified distributions work", {
   )
 })
 
+test_that("summary function returns a 1-row tibble of quantiles", {
+  cd <- cdist(mean = 10, sd = 1, dist = "norm")
+  expect_is(summary(cd), "tbl_df")
+  expect_true(all(grepl("^quantile", colnames(summary(cd)))))
+  expect_equal(nrow(summary(cd)), 1)
+})
+
+test_that("as.character returns a character vector", {
+  cd <- cdist(mean = 10, sd = 1, dist = "norm")
+  expect_is(as.character(cd), "character")
+  expect_length(as.character(cd), 1)
+})
+
+test_that("print prints things", {
+  cd <- cdist(mean = 10, sd = 1, dist = "norm")
+  expect_output(expect_is(print(cd), "cdist"), "^<continuous distribution")
+})
+
 test_that("translate pdist works according to plan", {
   cd <- cdist(mean = 10, sd = 1, dist = "norm")
   dta <- translate_distribution(
