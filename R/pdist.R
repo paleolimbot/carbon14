@@ -446,3 +446,33 @@ print.cdist <- function(x, alpha = 0.05, digits = 3, ...) {
 c.cdist <- function(...) {
   new_cdist(NextMethod())
 }
+
+
+#' Boxplot a continuous distribution vector using base graphics
+#'
+#' @param x A continuous distribution vector
+#' @param whisker_quantiles Quantiles for the ends of the whiskers
+#' @param box_quantiles Quantiles for the ends of the box
+#' @param mid_quantile Quantile for the middle marker
+#' @param ... Passed to \link[graphics]{bxp}
+#'
+#' @export
+#'
+boxplot.cdist <- function(x, whisker_quantiles = c(0.01, 0.99), box_quantiles = c(0.25, 0.75),
+                          mid_quantile = 0.5, ...) {
+
+  stats <- sapply(
+    x, quantile,
+    c(whisker_quantiles[1], box_quantiles[1], mid_quantile, box_quantiles[2], whisker_quantiles[2])
+  )
+
+  boxplot_info <- list(
+    stats = stats,
+    n = rep(Inf, length(x)),
+    conf = matrix(NA_real_, nrow = 2, ncol = length(x)),
+    out = numeric(0),
+    names = names(x) %||% as.character(seq_len(length(x)))
+  )
+
+  graphics::bxp(boxplot_info, ...)
+}

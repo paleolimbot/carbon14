@@ -196,3 +196,20 @@ test_that("vectorized version of translate_distribution works", {
     summary(cal_vec[[1]])
   )
 })
+
+test_that("boxplotting of cdist vectors works", {
+  # visual test
+  expect_true(TRUE)
+
+  tdist_named <- cdist_t(m = c(0, 5, 10), s = c(1, 2, 3), df = 10,
+                         names = c("zero", "five", "ten"))
+  boxplot(tdist_named)
+
+  lognorm_sample <- rlnorm(1000)
+  lognorm_dens <- density(lognorm_sample)
+  lognorm_custom <- cdist_item_from_densities(values = lognorm_dens$x, densities = lognorm_dens$y)
+  boxplot(lognorm_sample)
+  boxplot(cdist(lognorm_custom))
+
+
+})
