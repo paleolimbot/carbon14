@@ -31,6 +31,8 @@
 \item{alpha}{level of confience for character representation of objects}
 
 \item{digits}{Number of digits to display}
+
+\item{quote}{Whether or not to quote formatted objects}
 }
 \description{
 Summarise, coerce continuous distribution vectors

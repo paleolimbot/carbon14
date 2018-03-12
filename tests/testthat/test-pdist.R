@@ -163,6 +163,25 @@ test_that("vectorized distributions look ok in print output", {
 
 })
 
+test_that("normal, t shortcuts work as expected", {
+  ndist <- cdist_norm(mean = c(0, 5, 10), sd = 1)
+  expect_length(ndist, 3)
+  expect_is(ndist, "cdist")
+  expect_true(all(dplyr::near(summary(ndist)$weighted_mean, c(0, 5, 10))))
+
+  ndist_named <- cdist_norm(mean = c(0, 5, 10), sd = 1, names = c("zero", "five", "ten"))
+  expect_identical(names(ndist_named), c("zero", "five", "ten"))
+
+  tdist <- cdist_t(ncp = c(0, 5, 10), df = Inf)
+  expect_identical(
+    summary(tdist)$weighted_mean,
+    summary(ndist)$weighted_mean
+  )
+
+  tdist_named <- cdist_t(ncp = c(0, 5, 10), df = Inf, names = c("zero", "five", "ten"))
+  expect_identical(names(tdist_named), c("zero", "five", "ten"))
+})
+
 test_that("vectorized version of translate_distribution works", {
 
   date <- cdist_item(mean = 340, sd = 30, dist = "norm")

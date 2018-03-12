@@ -247,6 +247,36 @@ translate_distribution <- function(.data = NULL, x, y, y_sd = 0, dist, eps = 1e-
   cdist_item_from_densities(values = dist_values$x, densities = dist_values$density)
 }
 
+#' Construct parameterized distribution vectors
+#'
+#' @param .data An optional data frame from which parameters should be sourced
+#' @param mean,sd Parameters of the normal distribution
+#' @param ncp,df Parameters of the t distribution
+#' @param names Names for output objects
+#'
+#' @export
+cdist_norm <- function(.data = NULL, mean, sd, names = NULL) {
+  data <- data_eval(.data, mean = !!enquo(mean), sd = !!enquo(sd), names = !!enquo(names))
+  cd <- new_cdist(purrr::pmap(data[c("mean", "sd")], cdist_item, dist = "norm"))
+  if("names" %in% colnames(data)) {
+    purrr::set_names(cd, data$names)
+  } else {
+    cd
+  }
+}
+
+#' @rdname cdist_norm
+#' @export
+cdist_t <- function(.data = NULL, df, ncp, names = NULL) {
+  data <- data_eval(.data, df = !!enquo(df), ncp = !!enquo(ncp), names = !!enquo(names))
+  cd <- new_cdist(purrr::pmap(data[c("df", "ncp")], cdist_item, dist = "t"))
+  if("names" %in% colnames(data)) {
+    purrr::set_names(cd, data$names)
+  } else {
+    cd
+  }
+}
+
 #' Construct a continuous distribution vector
 #'
 #' @param ... Items created with \link{cdist_item} or \link{cdist_item_from_densities}.
@@ -328,6 +358,7 @@ validate_cdist <- function(x) {
 #' @param object,x A \link{cdist} vector
 #' @param alpha level of confience for character representation of objects
 #' @param digits Number of digits to display
+#' @param quote Whether or not to quote formatted objects
 #' @param ... Passed to parent functions
 #' @param .id column in which names should be placed, if present
 #'
