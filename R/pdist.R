@@ -13,9 +13,10 @@ cdist_item <- function(..., dist = NULL, density_function = NULL,
                        quantile_function = NULL, dist_info = list()) {
   params <- tibble::lst(...)
   stats_ns <- getNamespace("stats")
+  this_ns <- getNamespace("carbon14")
   if(!is.null(dist)) {
-    density_function_def <- stats_ns[[paste0("d", dist)]]
-    quantile_function_def <- stats_ns[[paste0("q", dist)]]
+    density_function_def <- this_ns[[paste0("d", dist)]] %||% stats_ns[[paste0("d", dist)]]
+    quantile_function_def <- this_ns[[paste0("q", dist)]] %||% stats_ns[[paste0("q", dist)]]
     dist_info <- c(dist_info, list(dist = dist), params)
     dist_info <- dist_info[unique(names(dist_info))]
   } else {
@@ -66,6 +67,14 @@ quantile_from_data <- function(data, q) {
   cdf <- cdf / max(cdf)
   vals <- stats::approx(cdf, data$values, xout = q)$y
   dplyr::if_else(q < min(cdf), min(data$values), vals)
+}
+
+dt <- function(values, df, m = 0, s = 1) {
+  stats::dt((values - m) / s, df = df)
+}
+
+qt <- function(q, df, m = 0, s = 1) {
+  stats::qt(q, df) * s + m
 }
 
 #' Summarise, print, characterify distributions
@@ -251,7 +260,7 @@ translate_distribution <- function(.data = NULL, x, y, y_sd = 0, dist, eps = 1e-
 #'
 #' @param .data An optional data frame from which parameters should be sourced
 #' @param mean,sd Parameters of the normal distribution
-#' @param ncp,df Parameters of the t distribution
+#' @param m,s,df Parameters of the t distribution (location of m, scale of s)
 #' @param names Names for output objects
 #'
 #' @export
@@ -267,9 +276,10 @@ cdist_norm <- function(.data = NULL, mean, sd, names = NULL) {
 
 #' @rdname cdist_norm
 #' @export
-cdist_t <- function(.data = NULL, df, ncp, names = NULL) {
-  data <- data_eval(.data, df = !!enquo(df), ncp = !!enquo(ncp), names = !!enquo(names))
-  cd <- new_cdist(purrr::pmap(data[c("df", "ncp")], cdist_item, dist = "t"))
+cdist_t <- function(.data = NULL, m, s, df, names = NULL) {
+  data <- data_eval(.data, df = !!enquo(df), m = !!enquo(m), s = !!enquo(s),
+                    names = !!enquo(names))
+  cd <- new_cdist(purrr::pmap(data[c("df", "m", "s")], cdist_item, dist = "t"))
   if("names" %in% colnames(data)) {
     purrr::set_names(cd, data$names)
   } else {

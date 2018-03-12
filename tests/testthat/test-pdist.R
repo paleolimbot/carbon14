@@ -172,13 +172,13 @@ test_that("normal, t shortcuts work as expected", {
   ndist_named <- cdist_norm(mean = c(0, 5, 10), sd = 1, names = c("zero", "five", "ten"))
   expect_identical(names(ndist_named), c("zero", "five", "ten"))
 
-  tdist <- cdist_t(ncp = c(0, 5, 10), df = Inf)
+  tdist <- cdist_t(m = c(0, 5, 10), s = 1, df = Inf)
   expect_identical(
     summary(tdist)$weighted_mean,
     summary(ndist)$weighted_mean
   )
 
-  tdist_named <- cdist_t(ncp = c(0, 5, 10), df = Inf, names = c("zero", "five", "ten"))
+  tdist_named <- cdist_t(m = c(0, 5, 10), s = 1, df = Inf, names = c("zero", "five", "ten"))
   expect_identical(names(tdist_named), c("zero", "five", "ten"))
 })
 

@@ -7,7 +7,7 @@
 \usage{
 cdist_norm(.data = NULL, mean, sd, names = NULL)
 
-cdist_t(.data = NULL, df, ncp, names = NULL)
+cdist_t(.data = NULL, m, s, df, names = NULL)
 }
 \arguments{
 \item{.data}{An optional data frame from which parameters should be sourced}
@@ -16,7 +16,7 @@ cdist_t(.data = NULL, df, ncp, names = NULL)
 
 \item{names}{Names for output objects}
 
-\item{ncp, df}{Parameters of the t distribution}
+\item{m, s, df}{Parameters of the t distribution (location of m, scale of s)}
 }
 \description{
 Construct parameterized distribution vectors
