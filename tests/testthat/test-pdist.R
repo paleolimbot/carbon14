@@ -76,7 +76,7 @@ test_that("translate pdist works according to plan", {
 })
 
 test_that("translate pdist works with a calibration curve", {
-  date <- cdist_item(mean = 340, sd = 30, dist = "norm")
+  date <- cdist_item(m = 340, s = 30, df = 100, dist = "t")
   cal <- translate_distribution(x = intcal13$cal_bp, y = intcal13$age_14C, dist = date)
   expect_is(cal, "cdist_item")
   bchron_cal <- Bchron::BchronCalibrate(340, 30, "intcal13")

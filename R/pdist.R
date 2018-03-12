@@ -240,7 +240,11 @@ translate_distribution <- function(.data = NULL, x, y, y_sd = 0, dist, eps = 1e-
 
   data$density_y <- density(dist, data$y)
 
-  nominal_sd <- diff(quantile(dist, c(0.16, 0.84))) / 2
+  # tries to use parameterized values, defaults to the middle 68% of data
+  nominal_sd <- dist$dist_info$sd %||%
+    dist$dist_info$s %||%
+    (diff(quantile(dist, c(0.16, 0.84))) / 2)
+
   xrange <- scales::expand_range(range(data$x[data$density_y > eps], na.rm = TRUE), mul = 1)
 
   dist_values <- tibble::tibble(
