@@ -7,13 +7,13 @@
 \alias{as_cdist.list}
 \title{Coerce to a continuous distribution vector}
 \usage{
-as_cdist(x)
+as_cdist(x, ...)
 
 \method{as_cdist}{cdist}(x, ...)
 
 \method{as_cdist}{cdist_item}(x, ...)
 
-\method{as_cdist}{list}(x)
+\method{as_cdist}{list}(x, ...)
 }
 \arguments{
 \item{x}{An object}

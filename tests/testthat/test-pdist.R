@@ -38,10 +38,12 @@ test_that("distribution math is close enough", {
   expect_true(dplyr::near(weighted.mean(truth), weighted.mean(approx), tol = 1e-4))
 })
 
-test_that("summary function returns a 1-row tibble", {
+test_that("summary, as_tibble, as.data.frame functions returns a 1-row data frame", {
   cd <- cdist_item(mean = 10, sd = 1, dist = "norm")
   expect_is(summary(cd), "tbl_df")
   expect_equal(nrow(summary(cd)), 1)
+  expect_is(tibble::as_tibble(cd), "tbl_df")
+  expect_is(as.data.frame(cd), "data.frame")
 })
 
 test_that("as.character returns a character vector", {
@@ -76,6 +78,7 @@ test_that("translate pdist works according to plan", {
 test_that("translate pdist works with a calibration curve", {
   date <- cdist_item(mean = 340, sd = 30, dist = "norm")
   cal <- translate_distribution(x = intcal13$cal_bp, y = intcal13$age_14C, dist = date)
+  expect_is(cal, "cdist_item")
   bchron_cal <- Bchron::BchronCalibrate(340, 30, "intcal13")
   bchron_dist <- cdist_item_from_densities(
     values = bchron_cal$Date1$ageGrid,
@@ -113,4 +116,64 @@ test_that("translate pdist works with a calibration curve", {
   bchron_dens <- bchron_dens / max(bchron_dens)
   lines(bchron_age, bchron_dens * (plot_range[4] - plot_range[3]) * 0.25 + plot_range[3],
         col = "purple")
+})
+
+test_that("vectorized normal distributions work according to plan", {
+  cdv <- cdist(
+    cdist_item(mean = 10, sd = 1, dist = "norm"),
+    cdist_item(mean = 0, sd = 1, dist = "norm")
+  )
+
+  expect_is(cdv, "cdist")
+  expect_is(head(cdv), "cdist")
+  expect_is(tail(cdv), "cdist")
+  expect_output(expect_is(print(cdv), "cdist"), "^<continuous distribution vector")
+
+  cdv2 <- cdist(
+    cdist_item(mean = 5, sd = 1, dist = "norm"),
+    cdist_item(mean = 15, sd = 1, dist = "norm")
+  )
+
+  expect_is(c(cdv, cdv2), "cdist")
+  expect_length(c(cdv, cdv2), 4)
+
+  cdv[1] <- list(cdist_item(mean = 22, sd = 1, dist = "norm"))
+  expect_is(cdv, "cdist")
+  expect_equal(cdv[[1]]$dist_info$mean, 22)
+
+  cdv[[1]] <- cdist_item(mean = 12, sd = 1, dist = "norm")
+  expect_is(cdv, "cdist")
+  expect_equal(cdv[[1]]$dist_info$mean, 12)
+
+  expect_is(summary(cdv), "tbl_df")
+  expect_is(tibble::as_tibble(cdv), "tbl_df")
+  expect_is(as.data.frame(cdv), "data.frame")
+})
+
+test_that("vectorized distributions look ok in print output", {
+  cdv <- cdist(
+    name1 = cdist_item(mean = 10, sd = 1, dist = "norm"),
+    name2 = cdist_item(mean = 0, sd = 1, dist = "norm")
+  )
+
+  expect_is(format(cdv), "character")
+  # check print output of df and tibble
+  df <- data.frame(name = names(cdv), I(cdv))
+  tbl <- tibble::tibble(name = names(cdv), cdv)
+
+})
+
+test_that("vectorized version of translate_distribution works", {
+
+  date <- cdist_item(mean = 340, sd = 30, dist = "norm")
+  date_vec <- cdist(date)
+  cal <- translate_distribution(x = intcal13$cal_bp, y = intcal13$age_14C, dist = date)
+  cal_vec <- translate_distribution(x = intcal13$cal_bp, y = intcal13$age_14C, dist = date_vec)
+
+  expect_is(cal_vec, "cdist")
+
+  expect_identical(
+    summary(cal),
+    summary(cal_vec[[1]])
+  )
 })

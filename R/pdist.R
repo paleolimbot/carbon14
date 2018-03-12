@@ -115,7 +115,7 @@ as.data.frame.cdist_item <- function(x, ...) {
 #' @export
 as.character.cdist_item <- function(x, digits = 3, alpha = 0.05, ...) {
   conf_level <- 1 - alpha
-  quants <- format(quantile(x, c(alpha, 0.5, conf_level)), digits = digits, ...)
+  quants <- format(quantile(x, c(alpha, 0.5, conf_level)), digits = digits, trim = TRUE, ...)
   sprintf("%s (%s%% CI: %s-%s)", quants[2], conf_level * 100, quants[1], quants[3])
 }
 
@@ -141,7 +141,7 @@ print.cdist_item <- function(x, ...) {
 #' @rdname summary.cdist_item
 #' @export
 format.cdist_item <- function(x, ...) {
-  as.character(x, ...)
+  format(as.character(x), quote = FALSE, ...)
 }
 
 new_cdist_item <- function(x) {
@@ -154,6 +154,7 @@ validate_cdist_item <- function(x) {
   if(!is.function(x$density_function)) stop("x$density_function is not a function")
   if(!is.function(x$quantile_function)) stop("x$quantile_function is not a function")
   if(!is.list(x$params)) stop("x$params is not a list")
+  if(!is.list(x$dist_info)) stop("x$dist_info is not a list")
 
   for(func in x[c("density_function", "quantile_function")]) {
     if(!all(names(x$params) %in% names(formals(func)))) stop("function missing arguments for params")
@@ -213,6 +214,21 @@ weighted.mean.cdist_item <- function(x, w = NULL, eps = 1e-8, n = 512, ...) {
 #' @export
 translate_distribution <- function(.data = NULL, x, y, y_sd = 0, dist, eps = 1e-8, n = 512) {
   data <- data_eval(.data, x = !!enquo(x), y = !!enquo(y), y_sd = !!enquo(y_sd))
+  if(inherits(dist, "cdist")) {
+    # vectorize
+    return(
+      new_cdist(purrr::map(
+        dist, translate_distribution,
+        .data = NULL,
+        x = data$x,
+        y = data$y,
+        y_sd = data$y_sd,
+        eps = eps,
+        n = n
+      ))
+    )
+  }
+
   data$density_y <- density(dist, data$y)
 
   nominal_sd <- diff(quantile(dist, c(0.16, 0.84))) / 2
@@ -236,6 +252,7 @@ translate_distribution <- function(.data = NULL, x, y, y_sd = 0, dist, eps = 1e-
 #' @param ... Items created with \link{cdist_item} or \link{cdist_item_from_densities}.
 #'
 #' @return A list-ish object of type cdist.
+#' @export
 #'
 cdist <- function(...) {
   as_cdist.list(list(...))
@@ -249,7 +266,7 @@ cdist <- function(...) {
 #' @return A continuous distribution vector
 #' @export
 #'
-as_cdist <- function(x) {
+as_cdist <- function(x, ...) {
   UseMethod("as_cdist")
 }
 
@@ -267,9 +284,9 @@ as_cdist.cdist_item <- function(x, ...) {
 
 #' @rdname as_cdist
 #' @export
-as_cdist.list <- function(x) {
+as_cdist.list <- function(x, ...) {
   cd <- new_cdist(x)
-  validate_cdist(x)
+  validate_cdist(cd)
   cd
 }
 
@@ -304,4 +321,83 @@ validate_cdist <- function(x) {
     )
   }
   invisible(x)
+}
+
+#' Summarise, coerce continuous distribution vectors
+#'
+#' @param object,x A \link{cdist} vector
+#' @param alpha level of confience for character representation of objects
+#' @param digits Number of digits to display
+#' @param ... Passed to parent functions
+#' @param .id column in which names should be placed, if present
+#'
+#' @export
+#'
+summary.cdist <- function(object, ..., .id = ".name") {
+  purrr::map_dfr(object, summary, ..., .id = .id)
+}
+
+#' @rdname summary.cdist
+#' @export
+as_tibble.cdist <- function(x, ...) {
+  summary.cdist(x, ...)
+}
+
+#' @rdname summary.cdist
+#' @export
+as.data.frame.cdist <- function(x, ...) {
+  as.data.frame(summary.cdist(x, ...))
+}
+
+#' @rdname summary.cdist
+#' @export
+as.character.cdist <- function(x, alpha = 0.05, digits = NULL, ...) {
+  sum <- summary(x, quantiles = c(alpha, 1 - alpha))
+  sum_quant <- dplyr::select(sum, dplyr::starts_with("quantile"))
+  sprintf(
+    "%s (%s%% CI: %s/%s)",
+    format(sum$weighted_mean, trim = TRUE, digits = digits, ...),
+    (1 - alpha) * 100,
+    format(sum_quant[[1]], trim = TRUE, digits = digits, ...),
+    format(sum_quant[[2]], trim = TRUE, digits = digits, ...)
+  )
+}
+
+#' @rdname summary.cdist
+#' @export
+format.cdist <- function(x, quote = FALSE, alpha = 0.05, digits = 3, ...) {
+  format(as.character(x, alpha = alpha, digits = digits), quote = quote, ...)
+}
+
+#' @rdname summary.cdist
+#' @export
+print.cdist <- function(x, alpha = 0.05, digits = 3, ...) {
+  conf <- 1 - alpha
+  chr <- as.character(x, alpha = alpha, digits = digits, ...)
+  cat("<continuous distribution vector>\n")
+  print(chr, quote = FALSE)
+  invisible(x)
+}
+
+#' @export
+`[[.cdist<-` <- function(x, i, value) {
+  validate_cdist_item(value)
+  new_cdist(NextMethod())
+}
+
+#' @export
+`[.cdist<-` <- function(x, i, value, ...) {
+  if(!is.list())
+  lapply(value, validate_cdist_item(value))
+  new_cdist(NextMethod())
+}
+
+#' @export
+`[.cdist` <- function(x, i, ...) {
+  new_cdist(NextMethod())
+}
+
+#' @export
+c.cdist <- function(...) {
+  new_cdist(NextMethod())
 }
