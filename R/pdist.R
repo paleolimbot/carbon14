@@ -9,7 +9,7 @@
 #'
 #' @importFrom purrr %||%
 #' @export
-cdist <- function(..., dist = "norm", density_function = NULL,
+cdist_item <- function(..., dist = "norm", density_function = NULL,
                        quantile_function = NULL, dist_info = list()) {
   params <- tibble::lst(...)
   stats_ns <- getNamespace("stats")
@@ -22,14 +22,14 @@ cdist <- function(..., dist = "norm", density_function = NULL,
     quantile_function_def <- NULL
   }
 
-  item <- new_cdist(list(
+  item <- new_cdist_item(list(
     density_function = density_function %||% density_function_def,
     quantile_function = quantile_function %||% quantile_function_def,
     dist_info = dist_info,
     params = params
   ))
 
-  validate_cdist(item)
+  validate_cdist_item(item)
 
   item
 }
@@ -42,9 +42,9 @@ cdist <- function(..., dist = "norm", density_function = NULL,
 #' @importFrom rlang !!
 #' @importFrom rlang enquo
 #' @export
-custom_cdist <- function(.data = NULL, values, densities) {
+custom_cdist_item <- function(.data = NULL, values, densities) {
   data <- data_eval(.data, values = !!enquo(values), densities = !!enquo(densities))
-  cdist(
+  cdist_item(
     density_function = function(values) {
       stats::approx(data$values, data$densities, xout = values)$y
     },
@@ -58,14 +58,14 @@ custom_cdist <- function(.data = NULL, values, densities) {
 
 #' Summarise, print, characterify distributions
 #'
-#' @param object,x A \link{cdist} object.
+#' @param object,x A \link{cdist_item} object.
 #' @param digits The number of digits to display
 #' @param alpha The confidence level to which print when coercing to character
 #' @param ... Passed to parent methods
 #'
 #' @export
 #'
-summary.cdist <- function(object, ...) {
+summary.cdist_item <- function(object, ...) {
   quantile_vals <- c(0.01, 0.05, 0.16, 0.5, 0.84, 0.95, 0.99)
   quants <- purrr::set_names(
     stats::quantile(object, quantile_vals),
@@ -74,17 +74,17 @@ summary.cdist <- function(object, ...) {
   tibble::as.tibble(as.list(quants))
 }
 
-#' @rdname summary.cdist
+#' @rdname summary.cdist_item
 #' @export
-as.character.cdist <- function(x, digits = 3, alpha = 0.05, ...) {
+as.character.cdist_item <- function(x, digits = 3, alpha = 0.05, ...) {
   conf_level <- 1 - alpha
   quants <- format(quantile(x, c(alpha, 0.5, conf_level)), digits = digits, ...)
   sprintf("%s (%s%% CI: %s-%s)", quants[2], conf_level * 100, quants[1], quants[3])
 }
 
-#' @rdname summary.cdist
+#' @rdname summary.cdist_item
 #' @export
-print.cdist <- function(x, ...) {
+print.cdist_item <- function(x, ...) {
   info <- x$dist_info
   if(length(info) > 0) {
     desc <- paste(names(info), purrr::map_chr(info, format), sep = " = ", collapse = ", ")
@@ -92,25 +92,25 @@ print.cdist <- function(x, ...) {
   } else {
     desc <- ""
   }
-  chr <- format.cdist(x, ...)
+  chr <- format.cdist_item(x, ...)
   cat(sprintf("<continuous distribution%s>\n", desc))
   print(chr, quote = FALSE)
   invisible(x)
 }
 
-#' @rdname summary.cdist
+#' @rdname summary.cdist_item
 #' @export
-format.cdist <- function(x, ...) {
+format.cdist_item <- function(x, ...) {
   as.character(x, ...)
 }
 
-new_cdist <- function(x) {
+new_cdist_item <- function(x) {
   if(!is.list(x)) stop("class cpdist must be a list")
-  structure(x, class = "cdist")
+  structure(x, class = "cdist_item")
 }
 
-validate_cdist <- function(x) {
-  if(!inherits(x, "cdist")) stop("x is not a of class cdist")
+validate_cdist_item <- function(x) {
+  if(!inherits(x, "cdist_item")) stop("x is not a of class cdist_item")
   if(!is.function(x$density_function)) stop("x$density_function is not a function")
   if(!is.function(x$quantile_function)) stop("x$quantile_function is not a function")
   if(!is.list(x$params)) stop("x$params is not a list")
@@ -124,7 +124,7 @@ validate_cdist <- function(x) {
 
 #' @importFrom stats quantile
 #' @export
-quantile.cdist <- function(x, probs = seq(0, 1, 0.25), names = FALSE, ...) {
+quantile.cdist_item <- function(x, probs = seq(0, 1, 0.25), names = FALSE, ...) {
   q <- do.call(x$quantile_function, c(list(probs), x$params))
   if(names) {
     purrr::set_names(q, format(probs))
@@ -135,7 +135,7 @@ quantile.cdist <- function(x, probs = seq(0, 1, 0.25), names = FALSE, ...) {
 
 #' @importFrom stats density
 #' @export
-density.cdist <- function(x, values, ...) {
+density.cdist_item <- function(x, values, ...) {
   do.call(x$density_function, c(list(values), x$params))
 }
 
@@ -145,7 +145,7 @@ density.cdist <- function(x, values, ...) {
 #' @param x A vector of destination values
 #' @param y A vector of source values (x->y must be unique)
 #' @param y_sd Optional standard deviation of source value curve
-#' @param dist A \link{cdist} containing source densities
+#' @param dist A \link{cdist_item} containing source densities
 #' @param eps Initial densities smaller than this number will not be considered
 #' @param n The number of equally-spaced x values at which density should be calculated
 #'
@@ -169,5 +169,5 @@ translate_distribution <- function(.data = NULL, x, y, y_sd = 0, dist, eps = 1e-
   dist_values$density <- dist_values$density / sum(dist_values$density, na.rm = TRUE)
   dist_values <- dplyr::filter(dist_values, !is.na(.data$density), !is.na(.data$x))
 
-  custom_cdist(values = dist_values$x, densities = dist_values$density)
+  custom_cdist_item(values = dist_values$x, densities = dist_values$density)
 }

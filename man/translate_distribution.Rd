@@ -16,7 +16,7 @@ translate_distribution(.data = NULL, x, y, y_sd = 0, dist, eps = 1e-08,
 
 \item{y_sd}{Optional standard deviation of source value curve}
 
-\item{dist}{A \link{cdist} containing source densities}
+\item{dist}{A \link{cdist_item} containing source densities}
 
 \item{eps}{Initial densities smaller than this number will not be considered}
 
