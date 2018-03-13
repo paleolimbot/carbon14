@@ -36,6 +36,7 @@ for(item in transpose(files)) {
     measured_age = "age_14C",
     measured_age_error = "error"
   )
+  attr(df, "curve_name") <- item$object_name
   assign(item$object_name, df)
   do.call(devtools::use_data, list(rlang::sym(item$object_name), overwrite = TRUE))
 }

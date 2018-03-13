@@ -34,27 +34,36 @@
 #' \url{http://www.radiocarbon.org/IntCal13.htm}
 #'
 "intcal13"
+data("intcal13", envir = environment())
 
 #' @rdname intcal13
 "marine13"
+data("marine13", envir = environment())
+
 
 #' @rdname intcal13
 "shcal13"
+data("shcal13", envir = environment())
 
 #' @rdname intcal13
 "intcal09"
+data("intcal09", envir = environment())
 
 #' @rdname intcal13
 "marine09"
+data("marine09", envir = environment())
 
 #' @rdname intcal13
 "intcal04"
+data("intcal04", envir = environment())
 
 #' @rdname intcal13
 "marine04"
+data("marine04", envir = environment())
 
 #' @rdname intcal13
 "shcal04"
+data("shcal04", envir = environment())
 
 
 

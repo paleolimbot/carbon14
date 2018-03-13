@@ -457,6 +457,7 @@ c.cdist <- function(...) {
 #' @param ... Passed to \link[graphics]{bxp}
 #'
 #' @export
+#' @importFrom graphics boxplot
 #'
 boxplot.cdist <- function(x, whisker_quantiles = c(0.01, 0.99), box_quantiles = c(0.25, 0.75),
                           mid_quantile = 0.5, ...) {

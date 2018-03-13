@@ -8,12 +8,15 @@
 \method{print}{age_calibration_curve}(x, ...)
 
 \method{plot}{age_calibration_curve}(x, type = "l", xlab = "Age (cal BP)",
-  ylab = "Measured Age", ..., measured_age_limits = TRUE)
+  ylab = "Measured Age", title = attr(x, "curve_name"), ...,
+  measured_age_limits = TRUE)
 }
 \arguments{
 \item{x}{An age-depth calibration}
 
 \item{type, xlab, ylab, ...}{Passed to \link[graphics]{plot}}
+
+\item{title}{A title for the plot}
 
 \item{measured_age_limits}{Plot high and low values of the measured age}
 }

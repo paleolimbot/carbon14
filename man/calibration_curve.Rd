@@ -5,8 +5,7 @@
 \title{Create a calibration curve}
 \usage{
 calibration_curve(.data = NULL, cal_age, measured_age,
-  measured_age_error = NULL, measured_age_min = NA_real_,
-  measured_age_max = NA_real_)
+  measured_age_error = 0, name = NULL)
 }
 \arguments{
 \item{.data}{An optional data frame}
@@ -15,7 +14,9 @@ calibration_curve(.data = NULL, cal_age, measured_age,
 
 \item{measured_age}{The measured age (usually 14C years  measurements)}
 
-\item{measured_age_error, measured_age_min, measured_age_max}{Error on the measured age, plus or minus}
+\item{measured_age_error}{Error on the measured age, plus or minus}
+
+\item{name}{a name for the calibration curve}
 }
 \value{
 A tibble classed as an age_calibration_curve
