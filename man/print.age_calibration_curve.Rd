@@ -7,9 +7,9 @@
 \usage{
 \method{print}{age_calibration_curve}(x, ...)
 
-\method{plot}{age_calibration_curve}(x, type = "l", xlab = "Age (cal BP)",
-  ylab = "Measured Age", title = attr(x, "curve_name"), ...,
-  measured_age_limits = TRUE)
+\method{plot}{age_calibration_curve}(x, type = "l", xlab = attr(x,
+  "cal_age_type"), ylab = attr(x, "measured_age_type") \%||\% "Measured Age",
+  title = attr(x, "curve_name"), ..., measured_age_limits = TRUE)
 }
 \arguments{
 \item{x}{An age-depth calibration}

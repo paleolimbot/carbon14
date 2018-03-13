@@ -5,7 +5,8 @@
 \title{Create a calibration curve}
 \usage{
 calibration_curve(.data = NULL, cal_age, measured_age,
-  measured_age_error = 0, name = NULL)
+  measured_age_error = 0, name = NULL, cal_age_type = c("Calibrated BP",
+  "Year AD"), measured_age_type = NULL)
 }
 \arguments{
 \item{.data}{An optional data frame}
@@ -17,6 +18,8 @@ calibration_curve(.data = NULL, cal_age, measured_age,
 \item{measured_age_error}{Error on the measured age, plus or minus}
 
 \item{name}{a name for the calibration curve}
+
+\item{measured_age_type}{The type of measured age (usually 'Radiocarbon Years BP')}
 }
 \value{
 A tibble classed as an age_calibration_curve

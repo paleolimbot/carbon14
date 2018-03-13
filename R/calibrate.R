@@ -74,3 +74,55 @@ calibrate_single <- function(measured_age, measured_age_error, df, curve, name =
     dist = dist
   )
 }
+
+#' Translate a distribution from y to x along a discrete function
+#'
+#' @param .data A data frame from which to source x, y, and y_sd
+#' @param x A vector of destination values
+#' @param y A vector of source values (x->y must be unique)
+#' @param y_sd Optional standard deviation of source value curve
+#' @param dist A \link{cdist} containing source densities
+#' @param eps Initial densities smaller than this number will not be considered
+#' @param n The number of equally-spaced x values at which density should be calculated
+#'
+#' @importFrom rlang !!
+#' @importFrom rlang enquo
+#' @export
+translate_distribution <- function(.data = NULL, x, y, y_sd = 0, dist, eps = 1e-8, n = 512) {
+  data <- data_eval(.data, x = !!enquo(x), y = !!enquo(y), y_sd = !!enquo(y_sd))
+  if(inherits(dist, "cdist")) {
+    # vectorize
+    return(
+      new_cdist(purrr::map(
+        dist, translate_distribution,
+        .data = NULL,
+        x = data$x,
+        y = data$y,
+        y_sd = data$y_sd,
+        eps = eps,
+        n = n
+      ))
+    )
+  }
+
+  data$density_y <- density(dist, data$y)
+
+  # tries to use parameterized values, defaults to the middle 68% of data
+  nominal_sd <- dist$dist_info$sd %||%
+    dist$dist_info$s %||%
+    (diff(quantile(dist, c(0.16, 0.84))) / 2)
+
+  xrange <- scales::expand_range(range(data$x[data$density_y > eps], na.rm = TRUE), mul = 1)
+
+  dist_values <- tibble::tibble(
+    x = seq(xrange[1], xrange[2], length.out = n)
+  )
+  dist_values$y <- stats::approx(data$x, data$y, xout = dist_values$x)$y
+  dist_values$y_sd <- stats::approx(data$x, data$y_sd, xout = dist_values$x)$y
+  dist_values$tau <- dist_values$y_sd + nominal_sd ^ 2
+  dist_values$density <- density(dist, values = dist_values$y) / sqrt(dist_values$tau)
+  dist_values$density <- dist_values$density / sum(dist_values$density, na.rm = TRUE)
+  dist_values <- dplyr::filter(dist_values, !is.na(.data$density), !is.na(.data$x))
+
+  cdist_item_from_densities(values = dist_values$x, densities = dist_values$density)
+}
