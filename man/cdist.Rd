@@ -7,7 +7,7 @@
 cdist(...)
 }
 \arguments{
-\item{...}{Items created with \link{cdist_item} or \link{cdist_item_from_densities}.}
+\item{...}{Items created with \link{dist_item_parameterized} or \link{dist_item_custom}.}
 }
 \value{
 A list-ish object of type cdist.

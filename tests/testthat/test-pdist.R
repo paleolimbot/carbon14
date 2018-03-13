@@ -1,20 +1,15 @@
 context("test-pdist.R")
 
-test_that("cdist_item works for parameterized distributions", {
-  cd <- cdist_item(mean =  10, sd = 1, dist = "norm")
+test_that("dist_item works for parameterized distributions", {
+  cd <- dist_item_parameterized("norm", list(mean = 10, sd = 1))
   expect_equal(quantile(cd, 0.5), 10)
   expect_equal(density(cd, 5:15), dnorm(5:15, mean = 10, sd = 1))
-})
-
-test_that("invalid args for cdist_item for parameterized distributions are caught", {
-  expect_error(cdist_item(not_a_param_of_norm = 4, dist = "norm"),
-               "function missing arguments for params")
 })
 
 test_that("custom specified distributions work", {
   vals <- seq(-5, 5, 0.01)
   densities <- dnorm(vals, mean = 0, sd = 1)
-  cd <- cdist_item_from_densities(values = vals, densities = densities)
+  cd <- dist_item_custom(values = vals, densities = densities)
   expect_true(abs(quantile(cd, 0.5)) <= 0.01)
   expect_true(
     all(
@@ -27,8 +22,8 @@ test_that("custom specified distributions work", {
 })
 
 test_that("distribution math is close enough", {
-  truth <- cdist_item(mean = 0, sd = 1, dist = "norm")
-  approx <- cdist_item_from_densities(
+  truth <- dist_item_parameterized("norm", list(mean = 0, sd = 1))
+  approx <- dist_item_custom(
     values = seq(-5, 5, 0.01),
     densities = dnorm(values, mean = 0, sd = 1)
   )
@@ -39,7 +34,7 @@ test_that("distribution math is close enough", {
 })
 
 test_that("summary, as_tibble, as.data.frame functions returns a 1-row data frame", {
-  cd <- cdist_item(mean = 10, sd = 1, dist = "norm")
+  cd <- dist_item_parameterized("norm", list(mean = 10, sd = 1))
   expect_is(summary(cd), "tbl_df")
   expect_equal(nrow(summary(cd)), 1)
   expect_is(tibble::as_tibble(cd), "tbl_df")
@@ -47,20 +42,20 @@ test_that("summary, as_tibble, as.data.frame functions returns a 1-row data fram
 })
 
 test_that("as.character returns a character vector", {
-  cd <- cdist_item(mean = 10, sd = 1, dist = "norm")
+  cd <- dist_item_parameterized("norm", list(mean = 10, sd = 1))
   expect_is(as.character(cd), "character")
   expect_length(as.character(cd), 1)
 })
 
 test_that("print prints things", {
-  cd <- cdist_item(mean = 10, sd = 1, dist = "norm")
+  cd <- dist_item_parameterized("norm", list(mean = 10, sd = 1))
   expect_output(expect_is(print(cd), "cdist_item"), "^<continuous distribution")
 })
 
 test_that("vectorized normal distributions work according to plan", {
   cdv <- cdist(
-    cdist_item(mean = 10, sd = 1, dist = "norm"),
-    cdist_item(mean = 0, sd = 1, dist = "norm")
+    dist_item_parameterized("norm", list(mean = 10, sd = 1)),
+    dist_item_parameterized("norm", list(mean = 0, sd = 1))
   )
 
   expect_is(cdv, "cdist")
@@ -69,20 +64,20 @@ test_that("vectorized normal distributions work according to plan", {
   expect_output(expect_is(print(cdv), "cdist"), "^<continuous distribution vector")
 
   cdv2 <- cdist(
-    cdist_item(mean = 5, sd = 1, dist = "norm"),
-    cdist_item(mean = 15, sd = 1, dist = "norm")
+    dist_item_parameterized("norm", list(mean = 5, sd = 1)),
+    dist_item_parameterized("norm", list(mean = 15, sd = 1))
   )
 
   expect_is(c(cdv, cdv2), "cdist")
   expect_length(c(cdv, cdv2), 4)
 
-  cdv[1] <- list(cdist_item(mean = 22, sd = 1, dist = "norm"))
+  cdv[1] <- list(dist_item_parameterized("norm", list(mean = 22, sd = 1)))
   expect_is(cdv, "cdist")
-  expect_equal(cdv[[1]]$dist_info$mean, 22)
+  expect_equal(cdv[[1]]$params$mean, 22)
 
-  cdv[[1]] <- cdist_item(mean = 12, sd = 1, dist = "norm")
+  cdv[[1]] <- dist_item_parameterized("norm", list(mean = 12, sd = 1))
   expect_is(cdv, "cdist")
-  expect_equal(cdv[[1]]$dist_info$mean, 12)
+  expect_equal(cdv[[1]]$params$mean, 12)
 
   expect_is(summary(cdv), "tbl_df")
   expect_is(tibble::as_tibble(cdv), "tbl_df")
@@ -91,8 +86,8 @@ test_that("vectorized normal distributions work according to plan", {
 
 test_that("vectorized distributions look ok in print output", {
   cdv <- cdist(
-    name1 = cdist_item(mean = 10, sd = 1, dist = "norm"),
-    name2 = cdist_item(mean = 0, sd = 1, dist = "norm")
+    name1 = dist_item_parameterized("norm", list(mean = 10, sd = 1)),
+    name2 = dist_item_parameterized("norm", list(mean = 0, sd = 1))
   )
 
   expect_is(format(cdv), "character")
@@ -103,21 +98,21 @@ test_that("vectorized distributions look ok in print output", {
 })
 
 test_that("normal, t shortcuts work as expected", {
-  ndist <- cdist_norm(mean = c(0, 5, 10), sd = 1)
+  ndist <- dist_norm(mean = c(0, 5, 10), sd = 1)
   expect_length(ndist, 3)
   expect_is(ndist, "cdist")
   expect_true(all(dplyr::near(summary(ndist)$weighted_mean, c(0, 5, 10))))
 
-  ndist_named <- cdist_norm(mean = c(0, 5, 10), sd = 1, names = c("zero", "five", "ten"))
+  ndist_named <- dist_norm(mean = c(0, 5, 10), sd = 1, names = c("zero", "five", "ten"))
   expect_identical(names(ndist_named), c("zero", "five", "ten"))
 
-  tdist <- cdist_t(m = c(0, 5, 10), s = 1, df = Inf)
+  tdist <- dist_t(m = c(0, 5, 10), s = 1, df = Inf)
   expect_identical(
     summary(tdist)$weighted_mean,
     summary(ndist)$weighted_mean
   )
 
-  tdist_named <- cdist_t(m = c(0, 5, 10), s = 1, df = Inf, names = c("zero", "five", "ten"))
+  tdist_named <- dist_t(m = c(0, 5, 10), s = 1, df = Inf, names = c("zero", "five", "ten"))
   expect_identical(names(tdist_named), c("zero", "five", "ten"))
 })
 
@@ -125,15 +120,13 @@ test_that("boxplotting of cdist vectors works", {
   # visual test
   expect_true(TRUE)
 
-  tdist_named <- cdist_t(m = c(0, 5, 10), s = c(1, 2, 3), df = 10,
-                         names = c("zero", "five", "ten"))
+  tdist_named <- dist_t(m = c(0, 5, 10), s = c(1, 2, 3), df = 10,
+                        names = c("zero", "five", "ten"))
   boxplot(tdist_named)
 
   lognorm_sample <- rlnorm(1000)
   lognorm_dens <- density(lognorm_sample)
-  lognorm_custom <- cdist_item_from_densities(values = lognorm_dens$x, densities = lognorm_dens$y)
+  lognorm_custom <- dist_item_custom(values = lognorm_dens$x, densities = lognorm_dens$y)
   boxplot(lognorm_sample)
   boxplot(cdist(lognorm_custom))
-
-
 })

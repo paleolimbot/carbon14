@@ -37,7 +37,7 @@ test_that("calibrate works with curves specified as curves, vectors, character v
 
 
 test_that("translate pdist works according to plan", {
-  cd <- cdist_item(mean = 10, sd = 1, dist = "norm")
+  cd <- dist_item_parameterized("norm", list(mean = 10, sd = 1))
   curve <- calibration_curve(measured_age = seq(-10, 30, length.out = 10),
                              cal_age = seq(-10, 30, length.out = 10))
   dta <- translate_distribution(curve, dist = cd)
@@ -53,11 +53,11 @@ test_that("translate pdist works according to plan", {
 })
 
 test_that("translate pdist works with a calibration curve", {
-  date <- cdist_item(m = 340, s = 30, df = 100, dist = "t")
+  date <- dist_item_parameterized("t", list(m = 340, s = 30, df = 100))
   cal <- translate_distribution(intcal13, dist = date)
   expect_is(cal, "cdist_item")
   bchron_cal <- Bchron::BchronCalibrate(340, 30, "intcal13")
-  bchron_dist <- cdist_item_from_densities(
+  bchron_dist <- dist_item_custom(
     values = bchron_cal$Date1$ageGrid,
     densities = bchron_cal$Date1$densities
   )
@@ -98,7 +98,7 @@ test_that("translate pdist works with a calibration curve", {
 
 test_that("vectorized version of translate_distribution works", {
 
-  date <- cdist_item(mean = 340, sd = 30, dist = "norm")
+  date <- dist_item_parameterized("t", list(m = 340, s = 30, df = 100))
   date_vec <- cdist(date)
   cal <- translate_distribution(intcal13, dist = date)
   cal_vec <- translate_distribution(intcal13, dist = date_vec)

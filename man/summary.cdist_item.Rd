@@ -23,7 +23,7 @@
 \method{format}{cdist_item}(x, ...)
 }
 \arguments{
-\item{object, x}{A \link{cdist_item} object.}
+\item{object, x}{A continuous distribution object.}
 
 \item{quantiles}{Quantiles to include in the summary object}
 

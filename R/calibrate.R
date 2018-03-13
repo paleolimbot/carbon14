@@ -93,7 +93,7 @@ resolve_curve <- function(curve, null_age_type = "Calibrated BP", env = parent.f
 }
 
 calibrate_single <- function(measured_age, measured_age_error, df, curve, name = NULL) {
-  dist <- cdist_item(m = measured_age, s = measured_age_error, df = df, dist = "t")
+  dist <- dist_item_parameterized("t", list(m = measured_age, s = measured_age_error, df = df))
 
   if(!inherits(curve, "age_calibration_curve")) stop("curve is not an age_calibration_curve")
 
@@ -166,5 +166,5 @@ translate_distribution <- function(age_calibration_curve, dist, eps = 1e-8, n = 
   dist_values$density <- dist_values$density / sum(dist_values$density, na.rm = TRUE)
   dist_values <- dplyr::filter(dist_values, !is.na(.data$density), !is.na(.data$x))
 
-  cdist_item_from_densities(values = dist_values$x, densities = dist_values$density)
+  dist_item_custom(values = dist_values$x, densities = dist_values$density)
 }

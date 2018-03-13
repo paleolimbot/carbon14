@@ -1,74 +1,120 @@
 
-#' Create custom probability distributions
+
+#' Construct individual continuous distribution items
 #'
-#' @param ... Parameters to pass to density and quantile functions
-#' @param dist Suffix for distribution (e.g., "norm", "t", etc.)
-#' @param density_function Function like \link[stats]{dnorm}. Overrides dist argument.
-#' @param quantile_function Function like \link[stats]{qnorm}. Overrides dist argument.
-#' @param dist_info Meta information about the distribution
+#' @param params Parameters of the distribution (e.g. mean, sd)
+#' @param dist The distribution (e.g., norm)
+#' @param values Values for custom density distributions
+#' @param densities Paired density values for values
 #'
-#' @importFrom purrr %||%
+#' @return A continuous distribution object
 #' @export
-cdist_item <- function(..., dist = NULL, density_function = NULL,
-                       quantile_function = NULL, dist_info = list()) {
-  params <- tibble::lst(...)
-  stats_ns <- getNamespace("stats")
-  this_ns <- getNamespace("carbon14")
-  if(!is.null(dist)) {
-    density_function_def <- this_ns[[paste0("d", dist)]] %||% stats_ns[[paste0("d", dist)]]
-    quantile_function_def <- this_ns[[paste0("q", dist)]] %||% stats_ns[[paste0("q", dist)]]
-    dist_info <- c(dist_info, list(dist = dist), params)
-    dist_info <- dist_info[unique(names(dist_info))]
-  } else {
-    density_function_def <- NULL
-    quantile_function_def <- NULL
-  }
-
-  item <- new_cdist_item(list(
-    density_function = density_function %||% density_function_def,
-    quantile_function = quantile_function %||% quantile_function_def,
-    dist_info = dist_info,
-    params = params
-  ))
-
-  validate_cdist_item(item)
-
-  item
-}
-
-#' Create custom probability distributions from discrete densities
 #'
-#' @param .data A data frame from which to source values and densities
-#' @param values,densities Values and relative probability densities
-#'
-#' @importFrom rlang !!
-#' @importFrom rlang enquo
-#' @export
-cdist_item_from_densities <- function(.data = NULL, values, densities) {
-  data <- data_eval(.data, values = !!enquo(values), densities = !!enquo(densities))
-  cdist_item(
-    density_function = function(values) {
-      density_from_data(data, values)
-    },
-    quantile_function = function(q) {
-      quantile_from_data(data, q)
-    },
-    dist_info = list(dist = "custom", data = data)
+dist_item_parameterized <- function(dist, params) {
+  if(!is.character(dist) || (length(dist) != 1)) stop("dist must be a character vector of length 1")
+  if(!is.list(params)) stop("params must be a list")
+  structure(
+    list(params = params, dist = dist),
+    class = c(paste("dist_item", dist, sep = "_"), "dist_item_parameterized", "cdist_item")
   )
 }
 
-density_from_data <- function(data, values) {
-  dens <- stats::approx(data$values, data$densities, xout = values)$y
+#' @rdname dist_item_parameterized
+#' @export
+dist_item_custom <- function(values, densities) {
+  data <- tibble::tibble(values = !!enquo(values), densities = !!enquo(densities))
+  if(!is.numeric(data$values) || !is.numeric(data$densities)) {
+    stop("values and densities must be numeric")
+  }
+  structure(
+    list(data = data, dist = "custom"),
+    class = c("dist_item_custom", "cdist_item")
+  )
+}
+
+
+
+#' Quantile functions for continuous distribution items
+#'
+#' @param x The distribution
+#' @param probs The probabilities
+#' @param names Whether or not to include names in output
+#' @param ... Unused
+#'
+#' @return A numeric vector (possibly named) of quantiles
+#' @export
+#' @importFrom purrr %||%
+#' @importFrom stats quantile
+#'
+quantile.dist_item_parameterized <- function(x, probs = seq(0, 1, by = 0.25), names = FALSE, ...) {
+  stats_ns <- getNamespace("stats")
+  this_ns <- getNamespace("carbon14")
+  quantile_function <- this_ns[[paste0("q", x$dist)]] %||% stats_ns[[paste0("q", x$dist)]]
+  if(is.null(quantile_function)) {
+    stop("could not resolve quantile function q", x$dist, "()")
+  }
+  q <- do.call(quantile_function, c(list(probs), x$params))
+  if(names) {
+    purrr::set_names(q, format(probs))
+  } else {
+    q
+  }
+}
+
+#' @rdname quantile.dist_item_parameterized
+#' @export
+quantile.dist_item_custom <- function(x, probs = seq(0, 1, by = 0.25), names = FALSE, ...) {
+  cdf <- cumsum(x$data$densities)
+  cdf <- cdf / max(cdf)
+  vals <- stats::approx(cdf, x$data$values, xout = probs)$y
+  values <- dplyr::if_else(probs < min(cdf), min(x$data$values), vals)
+  if(names) {
+    purrr::set_names(values, format(probs))
+  } else {
+    values
+  }
+}
+
+#' Density functions for continuous distribution items
+#'
+#' @param x A continuous distribution item
+#' @param values Values at which densities should be calculated
+#' @param ... Unused
+#'
+#' @return A numeric vector of densities
+#' @export
+#' @importFrom purrr %||%
+#' @importFrom stats density
+#'
+density.dist_item_parameterized <- function(x, values, ...) {
+  stats_ns <- getNamespace("stats")
+  this_ns <- getNamespace("carbon14")
+  density_function <- this_ns[[paste0("d", x$dist)]] %||% stats_ns[[paste0("d", x$dist)]]
+  if(is.null(density_function)) {
+    stop("could not resolve density function d", x$dist, "()")
+  }
+  do.call(density_function, c(list(values), x$params))
+}
+
+#' @rdname density.dist_item_parameterized
+#' @export
+density.dist_item_custom <- function(x, values, ...) {
+  dens <- stats::approx(x$data$values, x$data$densities, xout = values)$y
   dplyr::if_else(is.na(dens), 0, dens)
 }
 
-quantile_from_data <- function(data, q) {
-  cdf <- cumsum(data$densities)
-  cdf <- cdf / max(cdf)
-  vals <- stats::approx(cdf, data$values, xout = q)$y
-  dplyr::if_else(q < min(cdf), min(data$values), vals)
-}
 
+#' Alternative t distribution
+#'
+#' T distribution but with mean and standard deviation (same params as the MASS implementation)
+#'
+#' @param values Values at which densities should be calculated
+#' @param df Degrees of freedom
+#' @param m "location" (mean)
+#' @param s "scale" (sd)
+#'
+#' @noRd
+#'
 dt <- function(values, df, m = 0, s = 1) {
   stats::dt((values - m) / s, df = df)
 }
@@ -79,7 +125,7 @@ qt <- function(q, df, m = 0, s = 1) {
 
 #' Summarise, print, characterify distributions
 #'
-#' @param object,x A \link{cdist_item} object.
+#' @param object,x A continuous distribution object.
 #' @param quantiles Quantiles to include in the summary object
 #' @param digits The number of digits to display
 #' @param alpha The confidence level to which print when coercing to character
@@ -93,7 +139,7 @@ summary.cdist_item <- function(object, quantiles = c(0.05, 0.25, 0.5, 0.75, 0.95
     paste0("quantile_", quantiles * 100)
   )
 
-  info <- object$dist_info
+  info <- c(list(dist = object$dist), object$params)
   if(length(info) > 0) {
     is_atomic <- purrr::map_lgl(info, is.atomic)
     len_1 <- purrr::map_lgl(info, function(item) length(item) == 1)
@@ -131,7 +177,7 @@ as.character.cdist_item <- function(x, digits = 3, alpha = 0.05, ...) {
 #' @rdname summary.cdist_item
 #' @export
 print.cdist_item <- function(x, ...) {
-  info <- x$dist_info
+  info <- c(list(dist = x$dist), x$params)
   if(length(info) > 0) {
     is_atomic <- purrr::map_lgl(info, is.atomic)
     len_1 <- purrr::map_lgl(info, function(item) length(item) == 1)
@@ -160,33 +206,14 @@ new_cdist_item <- function(x) {
 
 validate_cdist_item <- function(x) {
   if(!inherits(x, "cdist_item")) stop("x is not a of class cdist_item")
-  if(!is.function(x$density_function)) stop("x$density_function is not a function")
-  if(!is.function(x$quantile_function)) stop("x$quantile_function is not a function")
-  if(!is.list(x$params)) stop("x$params is not a list")
-  if(!is.list(x$dist_info)) stop("x$dist_info is not a list")
-
-  for(func in x[c("density_function", "quantile_function")]) {
-    if(!all(names(x$params) %in% names(formals(func)))) stop("function missing arguments for params")
-  }
+  quantiles <- try(quantile(x, c(0.05, 0.95)), silent = TRUE)
+  if(inherits(quantiles, "try-error")) stop("quantile() is not properly defined for x: ",
+                                            as.character(quantiles))
+  densities <- try(density(x, quantiles), silent = TRUE)
+  if(inherits(densities, "try-error")) stop("density() is not properly defined for x: ",
+                                            as.character(densities))
 
   invisible(x)
-}
-
-#' @importFrom stats quantile
-#' @export
-quantile.cdist_item <- function(x, probs = seq(0, 1, 0.25), names = FALSE, ...) {
-  q <- do.call(x$quantile_function, c(list(probs), x$params))
-  if(names) {
-    purrr::set_names(q, format(probs))
-  } else {
-    q
-  }
-}
-
-#' @importFrom stats density
-#' @export
-density.cdist_item <- function(x, values, ...) {
-  do.call(x$density_function, c(list(values), x$params))
 }
 
 #' @importFrom stats density
@@ -196,6 +223,16 @@ range.cdist_item <- function(..., na.rm = FALSE, eps = 0) {
   low <- purrr::map_dbl(items, quantile, eps)
   high <- purrr::map_dbl(items, quantile, 1 - eps)
   range(c(low, high))
+}
+
+#' @export
+min.cdist_item <- function(..., na.rm = FALSE, eps = 0) {
+  range(..., na.rm = na.rm, eps = eps)[1]
+}
+
+#' @export
+max.cdist_item <- function(..., na.rm = FALSE, eps = 0) {
+  range(..., na.rm = na.rm, eps = eps)[2]
 }
 
 #' @importFrom stats weighted.mean
@@ -208,6 +245,33 @@ weighted.mean.cdist_item <- function(x, w = NULL, eps = 1e-8, n = 512, ...) {
   weighted.mean(vals, w = dens / sum(dens))
 }
 
+#' @importFrom stats weighted.mean
+#' @export
+weighted.mean.dist_item_norm <- function(x, w = NULL, ...) {
+  x$params$mean
+}
+
+#' @importFrom stats weighted.mean
+#' @export
+weighted.mean.dist_item_t <- function(x, w = NULL, ...) {
+  x$params$m
+}
+
+#' @export
+mean.cdist_item <- function(x, trim = 0, ...) {
+  weighted.mean(x, eps = trim)
+}
+
+#' @export
+mean.dist_item_norm <- function(x, ...) {
+  x$params$mean
+}
+
+#' @export
+mean.dist_item_t <- function(x, ...) {
+  x$params$m
+}
+
 #' Construct parameterized distribution vectors
 #'
 #' @param .data An optional data frame from which parameters should be sourced
@@ -216,9 +280,10 @@ weighted.mean.cdist_item <- function(x, w = NULL, eps = 1e-8, n = 512, ...) {
 #' @param names Names for output objects
 #'
 #' @export
-cdist_norm <- function(.data = NULL, mean, sd, names = NULL) {
+dist_norm <- function(.data = NULL, mean, sd, names = NULL) {
   data <- data_eval(.data, mean = !!enquo(mean), sd = !!enquo(sd), names = !!enquo(names))
-  cd <- new_cdist(purrr::pmap(data[c("mean", "sd")], cdist_item, dist = "norm"))
+  cd <- new_cdist(purrr::map(purrr::transpose(data[c("mean", "sd")]),
+                              dist_item_parameterized, dist = "norm"))
   if("names" %in% colnames(data)) {
     purrr::set_names(cd, data$names)
   } else {
@@ -226,12 +291,13 @@ cdist_norm <- function(.data = NULL, mean, sd, names = NULL) {
   }
 }
 
-#' @rdname cdist_norm
+#' @rdname dist_norm
 #' @export
-cdist_t <- function(.data = NULL, m, s, df, names = NULL) {
+dist_t <- function(.data = NULL, m, s, df, names = NULL) {
   data <- data_eval(.data, df = !!enquo(df), m = !!enquo(m), s = !!enquo(s),
                     names = !!enquo(names))
-  cd <- new_cdist(purrr::pmap(data[c("df", "m", "s")], cdist_item, dist = "t"))
+  cd <- new_cdist(purrr::map(purrr::transpose(data[c("m", "s", "df")]),
+                              dist_item_parameterized, dist = "t"))
   if("names" %in% colnames(data)) {
     purrr::set_names(cd, data$names)
   } else {
@@ -241,7 +307,7 @@ cdist_t <- function(.data = NULL, m, s, df, names = NULL) {
 
 #' Construct a continuous distribution vector
 #'
-#' @param ... Items created with \link{cdist_item} or \link{cdist_item_from_densities}.
+#' @param ... Items created with \link{dist_item_parameterized} or \link{dist_item_custom}.
 #'
 #' @return A list-ish object of type cdist.
 #' @export
