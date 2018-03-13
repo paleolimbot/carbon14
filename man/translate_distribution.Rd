@@ -2,19 +2,13 @@
 % Please edit documentation in R/calibrate.R
 \name{translate_distribution}
 \alias{translate_distribution}
-\title{Translate a distribution from y to x along a discrete function}
+\title{Translate a distribution using a calibration curve}
 \usage{
-translate_distribution(.data = NULL, x, y, y_sd = 0, dist, eps = 1e-08,
-  n = 512)
+translate_distribution(age_calibration_curve, dist, eps = 1e-08, n = 512)
 }
 \arguments{
-\item{.data}{A data frame from which to source x, y, and y_sd}
-
-\item{x}{A vector of destination values}
-
-\item{y}{A vector of source values (x->y must be unique)}
-
-\item{y_sd}{Optional standard deviation of source value curve}
+\item{age_calibration_curve}{An age_calibration_curve (\link{calibration_curve}) or NULL
+for the identity curve}
 
 \item{dist}{A \link{cdist} containing source densities}
 
@@ -23,5 +17,5 @@ translate_distribution(.data = NULL, x, y, y_sd = 0, dist, eps = 1e-08,
 \item{n}{The number of equally-spaced x values at which density should be calculated}
 }
 \description{
-Translate a distribution from y to x along a discrete function
+Translate a distribution using a calibration curve
 }

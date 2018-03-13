@@ -19,6 +19,10 @@ calibration_curve(.data = NULL, cal_age, measured_age,
 
 \item{name}{a name for the calibration curve}
 
+\item{cal_age_type}{The type of the calibrated age (must be
+"Calibrated BP" or "Year AD"). See \link{in_year_ad} or \link{in_cal_bp} to switch
+an existing calibration curve from one unit to the other.}
+
 \item{measured_age_type}{The type of measured age (usually 'Radiocarbon Years BP')}
 }
 \value{

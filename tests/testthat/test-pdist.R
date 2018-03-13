@@ -57,24 +57,6 @@ test_that("print prints things", {
   expect_output(expect_is(print(cd), "cdist_item"), "^<continuous distribution")
 })
 
-test_that("translate pdist works according to plan", {
-  cd <- cdist_item(mean = 10, sd = 1, dist = "norm")
-  dta <- translate_distribution(
-    x = seq(-10, 30, length.out = 10),
-    y = seq(-10, 30, length.out = 10),
-    dist = cd
-  )
-
-  test_quantiles <- c(0.05, 0.5, 0.95)
-  expect_true(
-    all(
-      abs(quantile(dta, test_quantiles) -
-            qnorm(test_quantiles, mean = 10, sd = 1)) <
-        0.5
-    )
-  )
-})
-
 test_that("vectorized normal distributions work according to plan", {
   cdv <- cdist(
     cdist_item(mean = 10, sd = 1, dist = "norm"),

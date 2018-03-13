@@ -6,6 +6,9 @@
 #' @param measured_age The measured age (usually 14C years  measurements)
 #' @param measured_age_error Error on the measured age, plus or minus
 #' @param name a name for the calibration curve
+#' @param cal_age_type The type of the calibrated age (must be
+#'   "Calibrated BP" or "Year AD"). See \link{in_year_ad} or \link{in_cal_bp} to switch
+#'   an existing calibration curve from one unit to the other.
 #' @param measured_age_type The type of measured age (usually 'Radiocarbon Years BP')
 #'
 #' @return A tibble classed as an age_calibration_curve
@@ -45,6 +48,31 @@ calibration_curve <- function(.data = NULL, cal_age, measured_age,
   data
 }
 
+#' Create an identity calibration curve
+#'
+#' @param age_type The input age type (Calibrated BP or Year AD)
+#' @param range Range of ages that are valid
+#'
+#' @return A calibration curve
+#' @export
+#'
+null_calibration_curve <- function(
+  age_type = c("Calibrated BP", "Year AD"),
+  range = c(-70000, 70000)
+) {
+  age_type <- match.arg(age_type)
+  curve <- calibration_curve(
+    measured_age = range,
+    cal_age = range,
+    measured_age_type = age_type,
+    cal_age_type = age_type,
+    name = "identity"
+  )
+  # classify the curve such that it can be handled specially
+  class(curve) <- c("null_calibration_curve", class(curve))
+  curve
+}
+
 #' Convert an age calibration curve to a different calibrated age type
 #'
 #' @param x An existing age calibration curve (\link{calibration_curve}) or numeric vector
@@ -52,31 +80,33 @@ calibration_curve <- function(.data = NULL, cal_age, measured_age,
 #' @return A new age calibration curve
 #' @export
 #'
-in_cal_bp <- function(x, ...) {
+in_cal_bp <- function(x) {
   UseMethod("in_cal_bp")
 }
 
 #' @rdname in_cal_bp
 #' @export
-in_year_ad <- function(x, ...) {
+in_year_ad <- function(x) {
   UseMethod("in_year_ad")
 }
 
 #' @rdname in_cal_bp
 #' @export
-in_year_ad.default <- function(x, ...) {
+in_year_ad.default <- function(x) {
+  if(is.null(x)) return(NULL)
   1950 - x
 }
 
 #' @rdname in_cal_bp
 #' @export
-in_cal_bp.default <- function(x, ...) {
+in_cal_bp.default <- function(x) {
+  if(is.null(x)) return(NULL)
   1950 - x
 }
 
 #' @rdname in_cal_bp
 #' @export
-in_cal_bp.age_calibration_curve <- function(x, ...) {
+in_cal_bp.age_calibration_curve <- function(x) {
   type <- attr(x, "cal_age_type")
   if(is.null(type)) stop("NULL calibrated age type")
 

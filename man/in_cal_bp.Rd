@@ -9,15 +9,15 @@
 \alias{in_year_ad.age_calibration_curve}
 \title{Convert an age calibration curve to a different calibrated age type}
 \usage{
-in_cal_bp(x, ...)
+in_cal_bp(x)
 
-in_year_ad(x, ...)
+in_year_ad(x)
 
-\method{in_year_ad}{default}(x, ...)
+\method{in_year_ad}{default}(x)
 
-\method{in_cal_bp}{default}(x, ...)
+\method{in_cal_bp}{default}(x)
 
-\method{in_cal_bp}{age_calibration_curve}(x, ...)
+\method{in_cal_bp}{age_calibration_curve}(x)
 
 \method{in_year_ad}{age_calibration_curve}(x)
 }
