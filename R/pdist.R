@@ -279,9 +279,14 @@ is.na.cdist_item <- function(x, ...) {
 
 #' @export
 `+.dist_item_norm` <- function(x, y) {
-  if(missing(x)) return(x)
-  x$params$mean <- x$params$mean + y
-  x
+  if(missing(y)) return(x)
+  if(inherits(x, "cdist_item")) {
+    x$params$mean <- x$params$mean + y
+    x
+  } else {
+    y$params$mean <- y$params$mean + x
+    y
+  }
 }
 
 #' @export
@@ -300,9 +305,15 @@ is.na.cdist_item <- function(x, ...) {
 
 #' @export
 `+.dist_item_t` <- function(x, y) {
-  if(missing(x)) return(x)
-  x$params$m <- x$params$m + y
-  x
+  if(missing(y)) return(x)
+  if(inherits(x, "cdist_item")) {
+    x$params$m <- x$params$m + y
+    x
+  } else {
+    y$params$m <- y$params$m + x
+    y
+  }
+
 }
 
 #' @export
@@ -321,9 +332,15 @@ is.na.cdist_item <- function(x, ...) {
 
 #' @export
 `+.dist_item_custom` <- function(x, y) {
-  if(missing(x)) return(x)
-  x$data$values <- x$data$values + y
-  x
+  if(missing(y)) return(x)
+  if(inherits(x, "cdist_item")) {
+    x$data$values <- x$data$values + y
+    x
+  } else {
+    y$data$values <- y$data$values + x
+    y
+  }
+
 }
 
 #' @export

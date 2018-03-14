@@ -19,22 +19,18 @@ test_that("calibrate works with curves specified as curves, vectors, character v
   expect_equal(quantile(cal_null$age_bp_distribution[[1]], c(0.05, 0.95)),
                                 qnorm(c(0.05, 0.95), mean = 50, sd = 10))
 
-  # uncomment this when arithmetic on distributions is implemented
-  # cal_null_ad <- calibrate(
-  #   measured_age = 50,
-  #   measured_age_error = 10,
-  #   curve = null_calibration_curve(),
-  #   cal_age_type = "Year AD"
-  # )
-  # expect_equal(quantile(cal_null_ad$age_bp_distribution[[1]], c(0.05, 0.95)),
-  #              qnorm(c(0.05, 0.95), mean = 1900, sd = 10))
+  cal_null_ad <- calibrate(
+    measured_age = 50,
+    measured_age_error = 10,
+    curve = null_calibration_curve(),
+    cal_age_type = "Year AD"
+  )
+  expect_equal(quantile(cal_null_ad$age_bp_distribution[[1]], c(0.05, 0.95)),
+               qnorm(c(0.05, 0.95), mean = 1900, sd = 10))
 
   expect_error(calibrate(measured_age = 330, measured_age_error = 30, curve = environment()),
                "curve must be a data frame, a vector, or NULL")
 })
-
-
-
 
 test_that("translate pdist works according to plan", {
   cd <- dist_item_parameterized("norm", list(mean = 10, sd = 1))

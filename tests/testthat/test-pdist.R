@@ -181,4 +181,23 @@ test_that("distribution math checks out", {
   expect_identical(5 - cust, -1 * (cust - 5))
   expect_identical(cust * 5, 5 * cust)
   expect_error(5 / cust, "division by a distribution is not defined")
+
+  # individual item arithmetic
+  expect_identical(+norm[[1]], norm[[1]])
+  expect_identical(-norm[[1]], norm[[1]] * -1)
+  expect_identical(5 + norm[[1]], norm[[1]] + 5)
+  expect_identical(5 * norm[[1]], norm[[1]] * 5)
+  expect_error(5 / norm, "division by a distribution is not defined")
+
+  expect_identical(+t[[1]], t[[1]])
+  expect_identical(-t[[1]], t[[1]] * -1)
+  expect_identical(5 + t[[1]], t[[1]] + 5)
+  expect_identical(5 * t[[1]], t[[1]] * 5)
+  expect_error(5 / t, "division by a distribution is not defined")
+
+  expect_identical(+cust[[1]], cust[[1]])
+  expect_identical(-cust[[1]], cust[[1]] * -1)
+  expect_identical(5 + cust[[1]], cust[[1]] + 5)
+  expect_identical(5 * cust[[1]], cust[[1]] * 5)
+  expect_error(5 / cust, "division by a distribution is not defined")
 })
