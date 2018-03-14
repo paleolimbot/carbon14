@@ -132,9 +132,17 @@ plot_single_result <- function(x, ..., xlim = NULL, ylim = NULL, eps = 1e-4, env
   cal_age <- curve[[cols$cal_age]]
   age_filter <- (cal_age >= range_cal[1]) & (cal_age <= range_cal[2])
   meas <- curve[[cols$measured_age]]
-  meas_max <- meas + curve[[cols$measured_age_error]]
-  meas_min <- meas - curve[[cols$measured_age_error]]
-  range_meas <- range(meas_max[age_filter], meas_min[age_filter])
+
+  if(!any(age_filter)) {
+    # no points on the calibration curve in range
+    # (probably the null calibration curve)
+    range_meas <- stats::approx(cal_age, meas, xout = range_cal)$y
+  } else {
+    meas <- curve[[cols$measured_age]]
+    meas_max <- meas + curve[[cols$measured_age_error]]
+    meas_min <- meas - curve[[cols$measured_age_error]]
+    range_meas <- range(meas_max[age_filter], meas_min[age_filter])
+  }
 
   # get plot title
   if(!is.null(x$name)) {

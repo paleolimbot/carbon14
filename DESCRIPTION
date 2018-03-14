@@ -12,7 +12,8 @@ Imports: rlang,
     dplyr,
     purrr,
     scales,
-    withr
+    withr,
+    readr
 Suggests: testthat,
   Bchron
 RoxygenNote: 6.0.1

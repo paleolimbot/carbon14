@@ -37,6 +37,8 @@ calibration_curve <- function(.data = NULL, cal_age, measured_age,
     if(!is.character(measured_age_type) || (length(measured_age_type) != 1)) {
       stop("measured_age_type must be a character vector of length 1")
     }
+  } else {
+    measured_age_type <- "<unknown>"
   }
 
   attr(data, "curve_name") <- name %||% "<unnamed>"
@@ -46,6 +48,44 @@ calibration_curve <- function(.data = NULL, cal_age, measured_age,
   class(data) <- c("age_calibration_curve", class(data))
 
   data
+}
+
+#' Read a Carbon-14 Calibration Curve
+#'
+#' These files, typically ending in .14c, are files with a very specific
+#' format suitable for use with age calibration software.
+#'
+#' @param path A path (or URL) to the calibration curve
+#'
+#' @return A \link{calibration_curve}
+#' @export
+#'
+read_14c <- function(path) {
+  df <- readr::read_csv(
+    path,
+    comment = "#",
+    col_names = c("cal_bp", "age_14C", "error", "delta_14C", "sigma"),
+    col_types = readr::cols(.default = readr::col_double())
+  )
+
+  file_name <- basename(path)
+  curve_name <-gsub("\\.[a-zA-Z0-9]*$", "", file_name)
+  if(nchar(curve_name) == 0) {
+    curve_name <- NULL
+  }
+
+  class(df) <- c("age_calibration_curve", class(df))
+  attr(df, "spec") <- NULL
+  attr(df, "calibration") <- list(
+    cal_age = "cal_bp",
+    measured_age = "age_14C",
+    measured_age_error = "error"
+  )
+  attr(df, "curve_name") <- curve_name
+  attr(df, "measured_age_type") <- "Radiocarbon Years BP"
+  attr(df, "cal_age_type") <- "Calibrated BP"
+
+  df
 }
 
 #' Create an identity calibration curve

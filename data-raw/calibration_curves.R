@@ -22,7 +22,10 @@ files <- tibble(
 #      , YR BP  ,YR BP,per mil  ,per mil
 
 for(item in transpose(files)) {
+  # download, copy to inst
   curl::curl_download(item$url, item$file_loc)
+  file.copy(item$file_loc, file.path("inst/curves/", basename(item$file_loc)))
+
   df <- read_csv(
     item$file_loc,
     comment = "#",

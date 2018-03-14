@@ -67,3 +67,32 @@ And a summary of the ages can be generated using `summary()` on the `cal_age` co
 ```{r}
 summary(result$cal_age)
 ```
+
+## Calibration Curves
+
+The default calibration curve for `calibrate()` is [Intcal13](http://www.radiocarbon.org/IntCal13.htm), but others are also incluced in this package (see `?intcal13`). The curve can be changed using the curve argument, which doesn't have to be the same for each element (it can be a list of actual curves, or a list of object names). To read in another curve, you can use the `read_14c()` function, which will read a `.14c` file from a path or URL.
+
+```{r}
+read_14c("http://www.radiocarbon.org/IntCal13%20files/intcal13.14c")
+```
+
+Finally there is the `null_calibration_curve()`, which keeps dates as they are (e.g., pre-calibrated dates), and a calibration curve of your own design using `calibration_curve()`.
+
+```{r plot_cal_curves}
+custom_curve <- calibration_curve(
+  cal_age = 0:10000,
+  measured_age = cal_age + 50 * sin(cal_age / 20)
+)
+
+curve_result <- calibrate(
+  measured_age = 623, 
+  measured_age_error = 34,
+  curve = list(
+    intcal04, intcal09, intcal13,
+    shcal13, custom_curve, NULL
+  )
+)
+
+plot(curve_result, ylim = c(450, 750), xlim = c(450, 750))
+```
+

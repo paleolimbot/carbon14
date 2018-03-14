@@ -82,3 +82,16 @@ test_that("formatting a calibration curve looks ok in tibble/data frame output",
     curves = structure(list(intcal13, intcal09, intcal04), class = "age_calibration_curve_list")
   )
 })
+
+test_that("reading of calibration curves from .14c files works", {
+  curve_dir <- system.file("curves", package = "carbon14")
+  curves <- list.files(curve_dir, full.names = TRUE)
+  for(curve in curves) {
+    expect_is(read_14c(curve), "age_calibration_curve")
+  }
+  expect_identical(read_14c(file.path(curve_dir, "intcal13.14c")), intcal13)
+
+  # check read from url
+  expect_is(read_14c("http://www.radiocarbon.org/IntCal13%20files/intcal13.14c"),
+            "age_calibration_curve")
+})

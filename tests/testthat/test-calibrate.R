@@ -154,6 +154,9 @@ test_that("plotting of calibrate result", {
             df = c(4, 6, 8, 10, 12, 14), cal_age_type = "Year AD",
             name = paste("df =", c(4, 8, 12, 16, 20, 24))) %>%
     plot()
+
+  calibrate(measured_age = 340, measured_age_error = 30, curve = NULL) %>%
+    plot()
 })
 
 test_that("filtering a plot result results in a plot result", {
