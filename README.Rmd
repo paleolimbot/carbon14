@@ -1,0 +1,69 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+library(tidyverse)
+library(carbon14)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "README-",
+  dpi = 300
+)
+```
+
+# carbon14
+
+The goal of carbon14 is to provide a tidy interface to radiocarbon dating, to promote its inclusion in reproducible manuscripts.
+
+## Installation
+
+You can install carbon14 from github with:
+
+```{r gh-installation, eval = FALSE}
+# install.packages("devtools")
+devtools::install_github("paleolimbot/carbon14")
+```
+
+## Example
+
+Radiocarbon ages from [Long Lake, Nova Scotia, Canadfa](http://www.facetsjournal.com/doi/10.1139/facets-2017-0004):
+
+```{r, echo = FALSE}
+dates <- tribble(
+  ~sample_id, ~depth, ~age_14C, ~age_error,
+  "LL082011-C2-39", 94, 9148, 49,
+  "UOC-0844", 70.5, 8582, 28,
+  "LL082011-C2-87", 46, 4396, 55,
+  "UOC-0845", 37.5, 575, 18,
+  "LL082011-C2-124", 9, 623, 34
+)
+dates
+```
+
+Calibrating dates using `calibrate()`:
+
+```{r}
+result <- dates %>%
+  calibrate(
+    measured_age = age_14C, 
+    measured_age_error = age_error,
+    name = sample_id
+  )
+result
+```
+
+The result is a tibble, which also has a plot method to examine the results:
+
+```{r plot_long_lake}
+plot(result)
+```
+
+And a summary of the ages can be generated using `summary()` on the `cal_age` column of the output:
+
+```{r}
+summary(result$cal_age)
+```

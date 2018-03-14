@@ -190,3 +190,39 @@ plot.age_calibration_curve <- function(x, type = "l",
     graphics::title(title)
   }
 }
+
+#' @export
+as.character.age_calibration_curve <- function(x, ...) {
+  xlab <- attr(x, "cal_age_type")
+  ylab <- attr(x, "measured_age_type") %||% "Measured Age"
+  sprintf("<age_calibration_curve: '%s'>", attr(x, "curve_name"))
+}
+
+#' @export
+format.age_calibration_curve <- function(x, ...) {
+  as.character(x, ...)
+}
+
+#' @export
+as.character.age_calibration_curve_list <- function(x, ...) {
+  purrr::map_chr(x, as.character, ...)
+}
+
+#' @export
+format.age_calibration_curve_list <- function(x, ...) {
+  purrr::map_chr(x, format, ...)
+}
+
+#' @export
+print.age_calibration_curve_list <- function(x, ...) {
+  cat("<age_calibration_curve_list>\n")
+  print(format(x), quote = FALSE, ...)
+  invisible(x)
+}
+
+#' @export
+`[.age_calibration_curve_list` <- function(x, i, ...) {
+  result <- NextMethod()
+  class(result) <- "age_calibration_curve_list"
+  result
+}

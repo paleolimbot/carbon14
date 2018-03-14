@@ -46,6 +46,7 @@ calibrate <- function(.data = NULL, measured_age, measured_age_error, df = Inf,
   }
 
   data <- data_eval(
+    .data,
     name = !!enquo(name),
     measured_age = !!enquo(measured_age),
     measured_age_error = !!enquo(measured_age_error),
@@ -60,6 +61,7 @@ calibrate <- function(.data = NULL, measured_age, measured_age_error, df = Inf,
   data$curve_name <- purrr::map_chr(data$curve, attr, "curve_name")
   data$measured_age_type <- purrr::map_chr(data$curve, attr, "measured_age_type")
   data$cal_age_type <- purrr::map_chr(data$curve, attr, "cal_age_type")
+  class(data$curve) <- "age_calibration_curve_list"
 
   class(data) <- c("calibrate_result", class(data))
   data

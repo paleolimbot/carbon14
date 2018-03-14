@@ -55,3 +55,30 @@ test_that("plotting of a calibration curve works", {
   plot(intcal13)
   plot(intcal13, measured_age_limits = FALSE)
 })
+
+test_that("formatting a calibration curve looks ok in tibble/data frame output", {
+  expect_identical(format(intcal13), "<age_calibration_curve: 'intcal13'>")
+  expect_true(
+    all(
+      grepl(
+        "^<age_calibration_curve",
+        format(structure(list(intcal13, intcal09, intcal04), class = "age_calibration_curve_list"))
+      )
+    )
+  )
+  expect_true(
+    all(
+      grepl(
+        "^<age_calibration_curve",
+        format(
+          head(structure(list(intcal13, intcal09, intcal04), class = "age_calibration_curve_list"))
+        )
+      )
+    )
+  )
+
+  tibble::tibble(
+    i = 1:3,
+    curves = structure(list(intcal13, intcal09, intcal04), class = "age_calibration_curve_list")
+  )
+})
