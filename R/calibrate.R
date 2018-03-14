@@ -166,6 +166,12 @@ plot_single_result <- function(x, ..., xlim = NULL, ylim = NULL, eps = 1e-4, env
   date_dens <- date_dens / max(date_dens)
   graphics::lines(date_dens * (plot_range[2] - plot_range[1]) * 0.25 + plot_range[1], test_14c,
                   col = "blue")
+
+  graphics::mtext(
+    sprintf("%0.0f %0.0f-%0.0f (95%%)", weighted.mean(x$cal_age),
+            quantile(x$cal_age, 0.05), quantile(x$cal_age, 0.95)),
+    cex = 0.5
+  )
 }
 
 
