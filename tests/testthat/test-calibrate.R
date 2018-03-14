@@ -3,20 +3,20 @@ context("test-calibrate.R")
 test_that("calibrate works with curves specified as curves, vectors, character vectors, or NULL", {
   expect_identical(
     summary(calibrate(measured_age = 330, measured_age_error = 30,
-                      curve = intcal04)$age_bp_distribution),
+                      curve = intcal04)$cal_age),
     summary(calibrate(measured_age = 330, measured_age_error = 30,
-                      curve = "intcal04")$age_bp_distribution)
+                      curve = "intcal04")$cal_age)
   )
   expect_identical(
     summary(calibrate(measured_age = 330, measured_age_error = 30,
-                      curve = intcal04)$age_bp_distribution),
+                      curve = intcal04)$cal_age),
     summary(calibrate(measured_age = 330, measured_age_error = 30,
-                      curve = list(intcal04))$age_bp_distribution)
+                      curve = list(intcal04))$cal_age)
   )
 
   # should be close to input values
   cal_null <- calibrate(measured_age = 50, measured_age_error = 10, curve = NULL)
-  expect_equal(quantile(cal_null$age_bp_distribution[[1]], c(0.05, 0.95)),
+  expect_equal(quantile(cal_null$cal_age[[1]], c(0.05, 0.95)),
                                 qnorm(c(0.05, 0.95), mean = 50, sd = 10))
 
   cal_null_ad <- calibrate(
@@ -25,8 +25,19 @@ test_that("calibrate works with curves specified as curves, vectors, character v
     curve = null_calibration_curve(),
     cal_age_type = "Year AD"
   )
-  expect_equal(quantile(cal_null_ad$age_bp_distribution[[1]], c(0.05, 0.95)),
+  expect_equal(quantile(cal_null_ad$cal_age[[1]], c(0.05, 0.95)),
                qnorm(c(0.05, 0.95), mean = 1900, sd = 10))
+
+
+  expect_identical(
+    calibrate(measured_age = 50, measured_age_error = 10, curve = NULL),
+    calibrate(measured_age = 50, measured_age_error = 10, curve = "identity")
+  )
+
+  expect_identical(
+    calibrate(measured_age = 50, measured_age_error = 10, curve = NULL),
+    calibrate(measured_age = 50, measured_age_error = 10, curve = null_calibration_curve())
+  )
 
   expect_error(calibrate(measured_age = 330, measured_age_error = 30, curve = environment()),
                "curve must be a data frame, a vector, or NULL")

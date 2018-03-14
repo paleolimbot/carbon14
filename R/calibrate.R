@@ -53,9 +53,9 @@ calibrate <- function(.data = NULL, measured_age, measured_age_error, df = Inf,
     curve = !!curve
   )
 
-  data$age_bp_distribution <- as_cdist(purrr::pmap(data, calibrate_single))
+  data$cal_age <- as_cdist(purrr::pmap(data, calibrate_single))
   if("name" %in% colnames(data)) {
-    data$age_bp_distribution <- purrr::set_names(data$age_bp_distribution, data$name)
+    data$cal_age <- purrr::set_names(data$cal_age, data$name)
   }
   data$curve_name <- purrr::map_chr(data$curve, attr, "curve_name")
   data$measured_age_type <- purrr::map_chr(data$curve, attr, "measured_age_type")
@@ -80,8 +80,12 @@ resolve_curve <- function(curve, null_age_type = "Calibrated BP", env = parent.f
   if(is.null(curve)) {
     curve <- null_calibration_curve(null_age_type)
   } else if(is.character(curve)) {
-    curve <- get0(curve, envir = env, ifnotfound = NULL) %||%
-      get0(curve, envir = environment(), ifnotfound = NULL)
+    if(curve == "identity") {
+      curve <- null_calibration_curve(null_age_type)
+    } else {
+      curve <- get0(curve, envir = env, ifnotfound = NULL) %||%
+        get0(curve, envir = environment(), ifnotfound = NULL)
+    }
     if(is.null(curve)) stop("Could not resolve curve '", curve, "'")
   }
 
