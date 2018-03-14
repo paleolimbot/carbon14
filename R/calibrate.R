@@ -169,10 +169,20 @@ plot_single_result <- function(x, ..., xlim = NULL, ylim = NULL, eps = 1e-4, env
   graphics::lines(date_dens * (plot_range[2] - plot_range[1]) * 0.25 + plot_range[1], test_14c,
                   col = "blue")
 
+  # calibrated range text
   graphics::mtext(
     sprintf("%0.0f %0.0f-%0.0f (95%%)", weighted.mean(x$cal_age),
             quantile(x$cal_age, 0.05), quantile(x$cal_age, 0.95)),
-    cex = 0.5
+    cex = 0.5,
+    side = 3
+  )
+
+  # measured range text
+  txt <- sprintf("%0.0f %%+-%% %0.0f", x$measured_age, x$measured_age_err)
+  graphics::mtext(
+    parse(text = txt),
+    cex = 0.5,
+    side = 4
   )
 }
 

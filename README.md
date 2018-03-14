@@ -18,7 +18,7 @@ devtools::install_github("paleolimbot/carbon14")
 Example
 -------
 
-Radiocarbon ages from [Long Lake, Nova Scotia, Canadfa](http://www.facetsjournal.com/doi/10.1139/facets-2017-0004):
+Radiocarbon ages from [Long Lake, Nova Scotia, Canada](http://www.facetsjournal.com/doi/10.1139/facets-2017-0004):
 
     #> # A tibble: 5 x 4
     #>   sample_id       depth age_14C age_error
