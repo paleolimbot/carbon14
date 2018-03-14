@@ -30,7 +30,7 @@ calibrate <- function(.data = NULL, measured_age, measured_age_error, df = Inf,
     curve <- list(null_calibration_curve(cal_age_type))
   } else if(is.data.frame(curve_eval)) {
     if(!inherits(curve_eval, "age_calibration_curve")) {
-      stop("curve must be an age_calibration_curve()")
+      stop("curve must be a calibration_curve()")
     }
     curve <- list(curve_eval)
   } else if(is.vector(curve_eval)) {
@@ -60,10 +60,114 @@ calibrate <- function(.data = NULL, measured_age, measured_age_error, df = Inf,
   data$curve_name <- purrr::map_chr(data$curve, attr, "curve_name")
   data$measured_age_type <- purrr::map_chr(data$curve, attr, "measured_age_type")
   data$cal_age_type <- purrr::map_chr(data$curve, attr, "cal_age_type")
-  data$curve <- NULL
 
+  class(data) <- c("calibrate_result", class(data))
   data
 }
+
+#' @export
+#' @importFrom dplyr slice
+slice.calibrate_result <- function(.data, ...) {
+  result <- NextMethod()
+  class(result) <- c("calibrate_result", class(result))
+  result
+}
+
+#' @export
+#' @importFrom dplyr filter
+filter.calibrate_result <- function(.data, ...) {
+  result <- NextMethod()
+  class(result) <- c("calibrate_result", class(result))
+  result
+}
+
+#' @export
+dplyr::filter
+
+#' @export
+`[.calibrate_result` <- function(x, i, j, ...) {
+  result <- NextMethod()
+  if(inherits(result, "data.frame")) {
+    class(result) <- c("calibrate_result", class(result))
+  }
+  result
+}
+
+
+#' Plot a calibration result
+#'
+#' @param x An age calibration
+#' @param max_plot Maximum number of items to plot
+#' @param n_col Number of columns
+#' @param ... Passed to \link[graphics]{plot}
+#'
+#' @export
+#'
+plot.calibrate_result <- function(x, ..., max_plot = 9, n_col = 3) {
+  if(nrow(x) > max_plot) {
+    message("Plotting first ", max_plot, " dates. Use max_plot = Inf to plot all dates.")
+  }
+  x <- utils::head(x, max_plot)
+  n <- nrow(x)
+  rows <- (n + n_col - 1) %/% n_col
+  if(rows == 1) {
+    n_col <- n
+  }
+  withr::with_par(list(mfrow = c(rows, n_col)), {
+    purrr::map(purrr::transpose(x), plot_single_result, ..., env = parent.frame())
+  })
+  invisible(NULL)
+}
+
+plot_single_result <- function(x, ..., xlim = NULL, ylim = NULL, eps = 1e-4, env = parent.frame()) {
+  curve <- x$curve
+  cols <- attr(curve, "calibration")
+
+  # get xlim
+  range_cal <- range(x$cal_age, eps = eps)
+
+  # get ylim
+  cal_age <- curve[[cols$cal_age]]
+  age_filter <- (cal_age >= range_cal[1]) & (cal_age <= range_cal[2])
+  meas <- curve[[cols$measured_age]]
+  meas_max <- meas + curve[[cols$measured_age_error]]
+  meas_min <- meas - curve[[cols$measured_age_error]]
+  range_meas <- range(meas_max[age_filter], meas_min[age_filter])
+
+  # get plot title
+  if(!is.null(x$name)) {
+    title <- sprintf("%s (%s)", x$name, x$curve_name)
+  } else {
+    title <- x$curve_name
+  }
+
+  # plot curve
+  graphics::plot(
+    curve,
+    xlim = xlim %||% range_cal,
+    ylim = ylim %||% range_meas,
+    title = title,
+    ...
+  )
+
+  # plot distributions
+  plot_range <- graphics::par("usr")
+
+  test_bp <- seq(range_cal[1], range_cal[2], length.out = 1024)
+  cal_dens <- density(x$cal_age, test_bp)
+  cal_dens <- cal_dens / max(cal_dens)
+  graphics::lines(test_bp, cal_dens * (plot_range[4] - plot_range[3]) * 0.25 + plot_range[3],
+                  col = "red")
+
+  date <- dist_item_parameterized("t", list(df = x$df, m = x$measured_age, s = x$measured_age_error))
+  range_14c <- quantile(date, c(eps, 1 - eps))
+  test_14c <- seq(range_14c[1], range_14c[2], length.out = 1024)
+  date_dens <- density(date, test_14c)
+  date_dens <- date_dens / max(date_dens)
+  graphics::lines(date_dens * (plot_range[2] - plot_range[1]) * 0.25 + plot_range[1], test_14c,
+                  col = "blue")
+}
+
 
 #' Resolve a calibration curve
 #'
@@ -90,7 +194,7 @@ resolve_curve <- function(curve, null_age_type = "Calibrated BP", env = parent.f
   }
 
   if(!inherits(curve, "age_calibration_curve")) {
-    stop("Curve '", curve, "' is not an age_calibration_curve()")
+    stop("Curve '", curve, "' is not a calibration_curve()")
   }
 
   curve

@@ -102,7 +102,6 @@ test_that("translate pdist works with a calibration curve", {
         col = "purple")
 })
 
-
 test_that("vectorized version of translate_distribution works", {
 
   date <- dist_item_parameterized("t", list(m = 340, s = 30, df = 100))
@@ -118,3 +117,52 @@ test_that("vectorized version of translate_distribution works", {
   )
 })
 
+test_that("plotting of calibrate result", {
+
+  expect_silent(
+    calibrate(measured_age = seq(340, 1000, length.out = 9),
+              measured_age_error = seq(30, 100, length.out = 9)) %>%
+      plot()
+  )
+  expect_silent(
+    calibrate(measured_age = seq(340, 1000, length.out = 10),
+              measured_age_error = seq(30, 100, length.out = 10)) %>%
+      plot(max_plot = 10)
+  )
+  expect_message(
+    calibrate(measured_age = seq(340, 1000, length.out = 10),
+              measured_age_error = seq(30, 100, length.out = 10)) %>%
+      plot(),
+    "Plotting first"
+  )
+
+  calibrate(measured_age = seq(340, 1000, length.out = 6),
+            measured_age_error = seq(30, 100, length.out = 6)) %>%
+    plot(n_col = 2)
+
+  calibrate(measured_age = 340, measured_age_error = 30,
+            df = c(4, 6, 8, 10, 12, 14),
+            name = paste("df =", c(4, 8, 12, 16, 20, 24))) %>%
+    plot(xlim = c(0, 600),  ylim = c(100, 500))
+
+  calibrate(measured_age = 340, measured_age_error = 30,
+            df = c(4, 6, 8, 10, 12, 14),
+            name = paste("df =", c(4, 8, 12, 16, 20, 24))) %>%
+    plot()
+
+})
+
+test_that("filtering a plot result results in a plot result", {
+  cal <- calibrate(
+    measured_age = 340, measured_age_error = 30,
+    df = c(4, 6, 8, 10, 12, 14),
+    name = paste("df =", c(4, 8, 12, 16, 20, 24))
+  )
+
+  expect_is(cal, "calibrate_result")
+  expect_is(dplyr::filter(cal, df > 12), "calibrate_result")
+  expect_is(cal[cal$df > 12, ], "calibrate_result")
+  expect_is(dplyr::slice(cal, 1:6), "calibrate_result")
+  expect_is(head(cal), "calibrate_result")
+  expect_is(tail(cal), "calibrate_result")
+})
