@@ -2,10 +2,13 @@
 % Please edit documentation in R/pdist.R
 \name{boxplot.cdist}
 \alias{boxplot.cdist}
+\alias{plot.cdist}
 \title{Boxplot a continuous distribution vector using base graphics}
 \usage{
 \method{boxplot}{cdist}(x, whisker_quantiles = c(0.01, 0.99),
   box_quantiles = c(0.25, 0.75), mid_quantile = 0.5, ...)
+
+\method{plot}{cdist}(x, ...)
 }
 \arguments{
 \item{x}{A continuous distribution vector}

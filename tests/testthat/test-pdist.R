@@ -129,6 +129,9 @@ test_that("boxplotting of cdist vectors works", {
   lognorm_custom <- dist_item_custom(values = lognorm_dens$x, densities = lognorm_dens$y)
   boxplot(lognorm_sample)
   boxplot(cdist(lognorm_custom))
+
+  # plot output is the same...
+  plot(cdist(lognorm_custom))
 })
 
 test_that("distribution math checks out", {

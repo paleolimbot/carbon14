@@ -659,3 +659,9 @@ boxplot.cdist <- function(x, whisker_quantiles = c(0.01, 0.99), box_quantiles = 
 
   graphics::bxp(boxplot_info, ...)
 }
+
+#' @rdname boxplot.cdist
+#' @export
+plot.cdist <- function(x, ...) {
+  boxplot.cdist(x, ...)
+}
