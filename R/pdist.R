@@ -272,6 +272,88 @@ mean.dist_item_t <- function(x, ...) {
   x$params$m
 }
 
+#' @export
+is.na.cdist_item <- function(x, ...) {
+  all(is.na(quantile(c(0.05, 0.5, 0.95))))
+}
+
+#' @export
+`+.dist_item_norm` <- function(x, y) {
+  if(missing(x)) return(x)
+  x$params$mean <- x$params$mean + y
+  x
+}
+
+#' @export
+`*.dist_item_norm` <- function(x, y) {
+  if(inherits(x, "cdist_item")) {
+    dist <- x
+    operand <- y
+  } else {
+    dist <- y
+    operand <- x
+  }
+  dist$params$mean <- dist$params$mean * operand
+  dist$params$sd <- dist$params$sd * abs(operand)
+  dist
+}
+
+#' @export
+`+.dist_item_t` <- function(x, y) {
+  if(missing(x)) return(x)
+  x$params$m <- x$params$m + y
+  x
+}
+
+#' @export
+`*.dist_item_t` <- function(x, y) {
+  if(inherits(x, "cdist_item")) {
+    dist <- x
+    operand <- y
+  } else {
+    dist <- y
+    operand <- x
+  }
+  dist$params$m <- dist$params$m * operand
+  dist$params$s <- dist$params$s * abs(operand)
+  dist
+}
+
+#' @export
+`+.dist_item_custom` <- function(x, y) {
+  if(missing(x)) return(x)
+  x$data$values <- x$data$values + y
+  x
+}
+
+#' @export
+`*.dist_item_custom` <- function(x, y) {
+  if(inherits(x, "cdist_item")) {
+    dist <- x
+    operand <- y
+  } else {
+    dist <- y
+    operand <- x
+  }
+  dist$data$values <- dist$data$values * operand
+  dist
+}
+
+#' @export
+`-.cdist_item` <- function(x, y) {
+  if(missing(y)) return(x * -1)
+  x + (y * -1)
+}
+
+#' @export
+`/.cdist_item` <- function(x, y) {
+  if(inherits(x, "cdist_item")) {
+    x * (1 / y)
+  } else {
+    stop("division by a distribution is not defined")
+  }
+}
+
 #' Construct parameterized distribution vectors
 #'
 #' @param .data An optional data frame from which parameters should be sourced
@@ -461,6 +543,75 @@ c.cdist <- function(...) {
   new_cdist(NextMethod())
 }
 
+#' @export
+quantile.cdist <- function(x, probs = seq(0, 1, by = 0.25), names = FALSE, ...) {
+  sum <- dplyr::select(summary(x, quantiles = probs), dplyr::starts_with("quantile"))
+  mat <- as.matrix(sum)
+  if(names) {
+    rownames(mat) <- names(x)
+    colnames(mat) <- format(probs)
+  } else {
+    rownames(mat) <- NULL
+    colnames(mat) <- NULL
+  }
+
+  mat
+}
+
+#' @export
+mean.cdist <- function(x, na.rm = FALSE, ...) {
+  purrr::map_dbl(x, mean, na.rm = na.rm, ...)
+}
+
+#' @export
+weighted.mean.cdist <- function(x, w, ...) {
+  purrr::map_dbl(x, weighted.mean, ...)
+}
+
+#' @export
+#' @importFrom stats median
+median.cdist <- function(x, ...) {
+  quantile(x, 0.5, ...)
+}
+
+#' @export
+is.na.cdist <- function(x, ...) {
+  purrr::map_lgl(x, is.na, ...)
+}
+
+#' @export
+`+.cdist` <- function(x, y) {
+  if(missing(y)) return(x)
+  if(inherits(x, "cdist")) {
+    new_cdist(lapply(x, "+", y = y))
+  } else {
+    new_cdist(lapply(y, "+", x = x))
+  }
+}
+
+#' @export
+`-.cdist` <- function(x, y) {
+  if(missing(y)) return(x * -1)
+  x + (y * -1)
+}
+
+#' @export
+`*.cdist` <- function(x, y) {
+  if(inherits(x, "cdist")) {
+    new_cdist(lapply(x, "*", y = y))
+  } else {
+    new_cdist(lapply(y, "*", x = x))
+  }
+}
+
+#' @export
+`/.cdist` <- function(x, y) {
+  if(inherits(x, "cdist")) {
+    new_cdist(lapply(x, "/", y = y))
+  } else {
+    stop("division by a distribution is not defined")
+  }
+}
 
 #' Boxplot a continuous distribution vector using base graphics
 #'

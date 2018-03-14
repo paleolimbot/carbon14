@@ -130,3 +130,55 @@ test_that("boxplotting of cdist vectors works", {
   boxplot(lognorm_sample)
   boxplot(cdist(lognorm_custom))
 })
+
+test_that("distribution math checks out", {
+  norm <- dist_norm(mean = 10, sd = 1)
+  t <- dist_t(m = 10, s = 1, df = 12)
+  cust <- cdist(dist_item_custom(
+    seq(-10, 30, by = 0.01),
+    dnorm(seq(-10, 30, by = 0.01), mean = 10, sd = 1)
+  ))
+
+  # normal distribution arithmetic
+  expect_identical(mean(norm + 5), 10 + 5); expect_identical((norm + 5)[[1]]$params$sd, 1)
+  expect_identical(mean(norm - 5), 10 - 5); expect_identical((norm - 5)[[1]]$params$sd, 1)
+  expect_identical(mean(norm * 5), 10 * 5); expect_identical((norm * 5)[[1]]$params$sd, 1 * 5)
+  expect_identical(mean(norm / 5), 10 / 5); expect_identical((norm / 5)[[1]]$params$sd, 1 / 5)
+
+  # t distribution arithmetic
+  expect_identical(mean(t + 5), 10 + 5); expect_identical((t + 5)[[1]]$params$s, 1)
+  expect_identical(mean(t - 5), 10 - 5); expect_identical((t - 5)[[1]]$params$s, 1)
+  expect_identical(mean(t * 5), 10 * 5); expect_identical((t * 5)[[1]]$params$s, 1 * 5)
+  expect_identical(mean(t / 5), 10 / 5); expect_identical((t / 5)[[1]]$params$s, 1 / 5)
+
+  # custom distribution arithmetic
+  tol <- 1e-7
+  expect_true(dplyr::near(mean(cust + 5), 10 + 5, tol = tol));
+  expect_true(dplyr::near(mean(cust - 5), 10 - 5, tol = tol));
+  expect_true(dplyr::near(mean(cust * 5), 10 * 5, tol = tol));
+  expect_true(dplyr::near(mean(cust / 5), 10 / 5, tol = tol));
+
+  # normal distribution arithmetic properties
+  expect_identical(+norm, norm)
+  expect_identical(-norm, norm * -1)
+  expect_identical(norm + 5, 5 + norm)
+  expect_identical(5 - norm, -1 * (norm - 5))
+  expect_identical(norm * 5, 5 * norm)
+  expect_error(5 / norm, "division by a distribution is not defined")
+
+  # t distribution arithmetic properties
+  expect_identical(+t, t)
+  expect_identical(-t, t * -1)
+  expect_identical(t + 5, 5 + t)
+  expect_identical(5 - t, -1 * (t - 5))
+  expect_identical(t * 5, 5 * t)
+  expect_error(5 / t, "division by a distribution is not defined")
+
+  # custom distribution arithmetic properties
+  expect_identical(+cust, cust)
+  expect_identical(-cust, cust * -1)
+  expect_identical(cust + 5, 5 + cust)
+  expect_identical(5 - cust, -1 * (cust - 5))
+  expect_identical(cust * 5, 5 * cust)
+  expect_error(5 / cust, "division by a distribution is not defined")
+})
